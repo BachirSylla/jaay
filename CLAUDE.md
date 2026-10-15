@@ -70,6 +70,8 @@ Si un script `package.json` manque, crée-le avec ces noms.
 
 **Pas de Docker, pas de base locale.** On travaille directement sur un projet Supabase en ligne dédié au développement (`jaay-dev`). La CLI Supabase est une dépendance de dev du projet (`pnpm add -D supabase`), utilisée via `pnpm supabase …`. Le projet est lié une fois avec `pnpm supabase link --project-ref <ref>` ; la CLI lit `SUPABASE_ACCESS_TOKEN` et `SUPABASE_DB_PASSWORD` dans l'environnement. Ne lance jamais `supabase start` ni `supabase db reset`. Si une commande `--linked` n'existe pas dans la version installée de la CLI, signale-le au lieu de chercher un contournement.
 
+**`pnpm db:test` ne doit jamais être lancé sur le projet de production.** Les tests pgTAP s'exécutent sur le projet lié : ils créent des utilisateurs et des boutiques de test dans une transaction annulée, ce qui n'a sa place que sur `jaay-dev`. Avant de lancer `db:test`, vérifier que le projet lié (`supabase/.temp/project-ref`) est bien celui de développement.
+
 **Dépôt** : https://github.com/BachirSylla/jaay.git (branche `main`).
 
 ---
