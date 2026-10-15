@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion } from "motion/react";
@@ -40,6 +40,34 @@ const typeOptions = [
   { value: "reseller", label: t.reseller },
 ] as const;
 const channelChips = SALE_CHANNELS.map((value) => ({ value, label: fr.channels[value] }));
+
+type SaleDraft = { values: SaleInput; payment: PaymentState; editedPrices: string[] };
+
+function readDraft(key: string): SaleDraft | null {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as SaleDraft) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeDraft(key: string, draft: SaleDraft) {
+  try {
+    if ((draft.values.lines?.length ?? 0) === 0) localStorage.removeItem(key);
+    else localStorage.setItem(key, JSON.stringify(draft));
+  } catch {
+    // Storage unavailable (private mode): no draft, the form still works.
+  }
+}
+
+function clearDraft(key: string) {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // Nothing to clear.
+  }
+}
 
 /** Pre-filled price: suggested for individuals, reseller price (or suggested) for resellers. */
 function priceFor(product: Product | undefined, type: CustomerType): number | null {
@@ -95,7 +123,7 @@ export function NewSaleForm({
   const { fields, append, remove } = useFieldArray({ control: form.control, name: "lines" });
   const lines = useWatch({ control: form.control, name: "lines" }) ?? [];
   const customerType = useWatch({ control: form.control, name: "customerType" });
-  const productById = new Map(products.map((p) => [p.id, p]));
+  const productById = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
 
   const total = saleTotal(lines);
   const bags = lines.reduce((sum, line) => sum + (line.quantity ?? 0), 0);
@@ -117,12 +145,57 @@ export function NewSaleForm({
     });
   };
 
+  // Draft kept in this device's storage: a network cut or a closed tab never loses a sale.
+  const draftKey = `jaay:sale-draft:${shop.id}`;
+  const restored = useRef(false);
+
+  useEffect(() => {
+    if (restored.current) return;
+    restored.current = true;
+    const draft = readDraft(draftKey);
+    if (!draft) return;
+    const knownLines = draft.values.lines?.filter((line) => productById.has(line.productId)) ?? [];
+    if (knownLines.length === 0) return;
+    form.reset({ ...draft.values, lines: knownLines, payments: [] });
+    // Restoring from device storage can only happen after hydration (no storage on the
+    // server), once, when the screen opens.
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setPayment(draft.payment);
+    setCustomer(customers.find((c) => c.id === draft.values.customerId) ?? null);
+    setEditedPrices(new Set(draft.editedPrices));
+    /* eslint-enable react-hooks/set-state-in-effect */
+    toast(fr.offline.draftRestored);
+  }, [draftKey, form, customers, productById]);
+
+  useEffect(() => {
+    if (success !== null) return;
+    const save = () =>
+      writeDraft(draftKey, {
+        values: form.getValues(),
+        payment,
+        editedPrices: [...editedPrices],
+      });
+    save();
+    return form.subscribe({ formState: { values: true }, callback: save });
+  }, [draftKey, form, payment, editedPrices, success]);
+
   const onSubmit = (event: React.FormEvent) => {
     form.setValue("payments", paymentsFor(payment, total));
     form.handleSubmit((values) => {
       setFormError(null);
+      if (!navigator.onLine) {
+        setFormError(fr.errors.OFFLINE);
+        return;
+      }
       startTransition(async () => {
-        const result = await createSale(shop.id, values);
+        let result: Awaited<ReturnType<typeof createSale>>;
+        try {
+          result = await createSale(shop.id, values);
+        } catch {
+          // Network failure: the draft is still saved, the user can retry.
+          setFormError(navigator.onLine ? fr.errors.UNKNOWN : fr.errors.OFFLINE);
+          return;
+        }
         if (!result.ok) {
           if (result.stock) {
             const name = productById.get(result.stock.productId)?.name ?? "";
@@ -132,6 +205,7 @@ export function NewSaleForm({
           }
           return;
         }
+        clearDraft(draftKey);
         setSuccess(result.data.number);
         toast.success(fill(t.created, { n: result.data.number }), {
           action: {
