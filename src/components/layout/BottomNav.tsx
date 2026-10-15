@@ -41,7 +41,7 @@ export function BottomNav() {
           aria-current={active ? "page" : undefined}
           className={cn(
             "flex min-h-14 flex-col items-center justify-center gap-1 text-[11px] font-semibold outline-none focus-visible:text-cognac",
-            active ? "text-ink" : "text-subtle",
+            active ? "text-ink" : "text-muted-foreground",
           )}
         >
           <Icon aria-hidden="true" className={cn("size-[22px]", active && "text-cognac")} />
@@ -79,7 +79,7 @@ export function BottomNav() {
               onClick={() => setMoreOpen(true)}
               aria-haspopup="dialog"
               aria-expanded={moreOpen}
-              className="flex min-h-14 w-full flex-col items-center justify-center gap-1 text-[11px] font-semibold text-subtle outline-none focus-visible:text-cognac"
+              className="flex min-h-14 w-full flex-col items-center justify-center gap-1 text-[11px] font-semibold text-muted-foreground outline-none focus-visible:text-cognac"
             >
               <Menu aria-hidden="true" className="size-[22px]" />
               {fr.nav.more}

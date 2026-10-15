@@ -66,7 +66,7 @@ function MemberRow({ member }: { member: Member }) {
           ) : null}
         </span>
         <span className="truncate text-sm text-muted-foreground">{member.email}</span>
-        <span className="text-xs text-subtle">
+        <span className="text-xs text-muted-foreground">
           {t.since} {formatDate(member.createdAt)}
         </span>
       </div>
