@@ -9,7 +9,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { Money } from "@/components/shared/Money";
 import { useShop } from "@/features/shop/shop-context";
 import { formatDate, formatQty, toDateInputValue } from "@/lib/format";
-import { fill } from "@/lib/i18n";
+import { fill, plural } from "@/lib/i18n";
 import { fr } from "@/messages/fr";
 import type { Sale } from "../types";
 
@@ -65,7 +65,7 @@ export function SalesList({ sales, now }: { sales: Sale[]; now: string }) {
       <div className="grid grid-cols-2 gap-3 sm:max-w-md">
         <div className="rounded-2xl border border-line bg-surface p-4">
           <span className="text-[13px] font-medium text-muted-foreground">
-            {fill(t.countLabel, { n: active.length })}
+            {plural(active.length, t.countLabel)}
           </span>
           <Money amount={revenue} size="lg" className="block" />
         </div>

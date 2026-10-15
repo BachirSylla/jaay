@@ -13,7 +13,7 @@ import { getCustomer } from "@/features/customers/queries";
 import { listSales } from "@/features/sales/queries";
 import { requireShop } from "@/features/shop/require";
 import { formatDate, formatQty } from "@/lib/format";
-import { fill } from "@/lib/i18n";
+import { fill, plural } from "@/lib/i18n";
 import { formatPhone } from "@/lib/phone";
 import { isUuid } from "@/lib/uuid";
 import { fr } from "@/messages/fr";
@@ -85,7 +85,7 @@ async function CustomerDetail({ params }: { params: Promise<{ shopSlug: string; 
             {t.historyTitle}
             {active.length > 0 ? (
               <span className="ml-2 font-sans text-sm font-medium text-muted-foreground">
-                {fill(fr.sales.purchases, { n: active.length })}
+                {plural(active.length, fr.sales.purchases)}
               </span>
             ) : null}
           </h2>

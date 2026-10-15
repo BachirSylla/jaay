@@ -10,7 +10,7 @@ import { WhatsAppLink } from "@/components/shared/WhatsAppLink";
 import { Button } from "@/components/ui/button";
 import { useShop } from "@/features/shop/shop-context";
 import { formatMoney } from "@/lib/format";
-import { fill } from "@/lib/i18n";
+import { plural } from "@/lib/i18n";
 import { initials } from "@/lib/initials";
 import { formatPhone } from "@/lib/phone";
 import { fr } from "@/messages/fr";
@@ -131,7 +131,7 @@ export function CustomersList({
                     {[
                       customer.phone ? formatPhone(customer.phone) : null,
                       stats[customer.id]
-                        ? `${fill(fr.sales.purchases, { n: stats[customer.id].purchases })} · ${formatMoney(stats[customer.id].totalSpent)}`
+                        ? `${plural(stats[customer.id].purchases, fr.sales.purchases)} · ${formatMoney(stats[customer.id].totalSpent)}`
                         : null,
                     ]
                       .filter(Boolean)

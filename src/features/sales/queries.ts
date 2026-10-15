@@ -88,7 +88,13 @@ function toSale(row: SaleRow, withCosts: boolean): Sale {
 
 export async function listSales(
   shopId: string,
-  { from, customerId, withCosts }: { from?: Date; customerId?: string; withCosts: boolean },
+  {
+    from,
+    to,
+    customerId,
+    withCosts,
+    limit = 500,
+  }: { from?: Date; to?: Date; customerId?: string; withCosts: boolean; limit?: number },
 ): Promise<Sale[]> {
   const supabase = await createClient();
   let query = supabase
@@ -96,8 +102,9 @@ export async function listSales(
     .select(SALE_COLUMNS)
     .eq("shop_id", shopId)
     .order("sold_at", { ascending: false })
-    .limit(500);
+    .limit(limit);
   if (from) query = query.gte("sold_at", from.toISOString());
+  if (to) query = query.lt("sold_at", to.toISOString());
   if (customerId) query = query.eq("customer_id", customerId);
   const { data, error } = await query;
   if (error) throw error;
