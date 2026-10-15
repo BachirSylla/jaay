@@ -442,6 +442,237 @@ export type Database = {
           },
         ]
       }
+      sale_item_allocations: {
+        Row: {
+          id: string
+          lot_id: string
+          quantity: number
+          sale_item_id: string
+          shop_id: string
+          supplier_id: string
+          unit_cost: number
+        }
+        Insert: {
+          id?: string
+          lot_id: string
+          quantity: number
+          sale_item_id: string
+          shop_id: string
+          supplier_id: string
+          unit_cost: number
+        }
+        Update: {
+          id?: string
+          lot_id?: string
+          quantity?: number
+          sale_item_id?: string
+          shop_id?: string
+          supplier_id?: string
+          unit_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_item_allocations_lot_id_shop_id_fkey"
+            columns: ["lot_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "lots"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "sale_item_allocations_sale_item_id_shop_id_fkey"
+            columns: ["sale_item_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "sale_items"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "sale_item_allocations_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_item_allocations_supplier_id_shop_id_fkey"
+            columns: ["supplier_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id", "shop_id"]
+          },
+        ]
+      }
+      sale_items: {
+        Row: {
+          id: string
+          line_total: number | null
+          product_id: string
+          quantity: number
+          sale_id: string
+          shop_id: string
+          unit_price: number
+        }
+        Insert: {
+          id?: string
+          line_total?: number | null
+          product_id: string
+          quantity: number
+          sale_id: string
+          shop_id: string
+          unit_price: number
+        }
+        Update: {
+          id?: string
+          line_total?: number | null
+          product_id?: string
+          quantity?: number
+          sale_id?: string
+          shop_id?: string
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_items_product_id_shop_id_fkey"
+            columns: ["product_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "sale_items_sale_id_shop_id_fkey"
+            columns: ["sale_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "sale_items_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sale_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          id: string
+          method: Database["public"]["Enums"]["payment_method"]
+          paid_at: string
+          sale_id: string
+          shop_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          method: Database["public"]["Enums"]["payment_method"]
+          paid_at?: string
+          sale_id: string
+          shop_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          method?: Database["public"]["Enums"]["payment_method"]
+          paid_at?: string
+          sale_id?: string
+          shop_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_payments_sale_id_shop_id_fkey"
+            columns: ["sale_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "sale_payments_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales: {
+        Row: {
+          amount_paid: number
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          channel: Database["public"]["Enums"]["sale_channel"]
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          customer_type: Database["public"]["Enums"]["customer_type"]
+          id: string
+          note: string | null
+          number: number
+          shop_id: string
+          sold_at: string
+          status: Database["public"]["Enums"]["op_status"]
+          total_amount: number
+        }
+        Insert: {
+          amount_paid: number
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          channel?: Database["public"]["Enums"]["sale_channel"]
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_type?: Database["public"]["Enums"]["customer_type"]
+          id?: string
+          note?: string | null
+          number: number
+          shop_id: string
+          sold_at?: string
+          status?: Database["public"]["Enums"]["op_status"]
+          total_amount: number
+        }
+        Update: {
+          amount_paid?: number
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          channel?: Database["public"]["Enums"]["sale_channel"]
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_type?: Database["public"]["Enums"]["customer_type"]
+          id?: string
+          note?: string | null
+          number?: number
+          shop_id?: string
+          sold_at?: string
+          status?: Database["public"]["Enums"]["op_status"]
+          total_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_customer_id_shop_id_fkey"
+            columns: ["customer_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "sales_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shop_members: {
         Row: {
           created_at: string
@@ -563,6 +794,10 @@ export type Database = {
         Args: { p_reason: string; p_reception_id: string }
         Returns: undefined
       }
+      cancel_sale: {
+        Args: { p_reason: string; p_sale_id: string }
+        Returns: undefined
+      }
       create_default_categories: {
         Args: { p_shop_id: string }
         Returns: undefined
@@ -577,6 +812,42 @@ export type Database = {
           p_supplier_id: string
         }
         Returns: string
+      }
+      create_sale: {
+        Args: {
+          p_channel: Database["public"]["Enums"]["sale_channel"]
+          p_customer_id: string
+          p_customer_type: Database["public"]["Enums"]["customer_type"]
+          p_items: Json
+          p_note?: string
+          p_payments: Json
+          p_shop_id: string
+          p_sold_at: string
+        }
+        Returns: {
+          amount_paid: number
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          channel: Database["public"]["Enums"]["sale_channel"]
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          customer_type: Database["public"]["Enums"]["customer_type"]
+          id: string
+          note: string | null
+          number: number
+          shop_id: string
+          sold_at: string
+          status: Database["public"]["Enums"]["op_status"]
+          total_amount: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "sales"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       create_shop: {
         Args: { p_name: string; p_slug?: string; p_whatsapp_phone?: string }
@@ -601,6 +872,15 @@ export type Database = {
         }
       }
       find_user_id_by_email: { Args: { p_email: string }; Returns: string }
+      get_customer_stats: {
+        Args: { p_shop_id: string }
+        Returns: {
+          customer_id: string
+          last_purchase_at: string
+          purchases: number
+          total_spent: number
+        }[]
+      }
       get_reception_lines: {
         Args: { p_reception_id: string }
         Returns: {
@@ -654,6 +934,14 @@ export type Database = {
       customer_type: "individual" | "reseller"
       expense_category: "delivery" | "packaging" | "advertising" | "other"
       op_status: "active" | "cancelled"
+      payment_method: "wave" | "orange_money" | "cash" | "other"
+      sale_channel:
+        | "whatsapp"
+        | "instagram"
+        | "facebook"
+        | "tiktok"
+        | "in_person"
+        | "other"
       shop_role: "owner" | "admin" | "manager"
     }
     CompositeTypes: {
@@ -788,6 +1076,15 @@ export const Constants = {
       customer_type: ["individual", "reseller"],
       expense_category: ["delivery", "packaging", "advertising", "other"],
       op_status: ["active", "cancelled"],
+      payment_method: ["wave", "orange_money", "cash", "other"],
+      sale_channel: [
+        "whatsapp",
+        "instagram",
+        "facebook",
+        "tiktok",
+        "in_person",
+        "other",
+      ],
       shop_role: ["owner", "admin", "manager"],
     },
   },
