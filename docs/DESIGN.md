@@ -47,8 +47,8 @@ Couleurs fonctionnelles :
 | Token | Valeur | Usage |
 | --- | --- | --- |
 | `--pay-wave` | `#1D7FC2` | Wave |
-| `--pay-om` | `#E57F14` | Orange Money |
-| `--pay-cash` | `#17694F` | Espèces |
+| `--pay-om` | `#D06F12` | Orange Money (ajusté : validé daltonisme et contraste, clair et sombre) |
+| `--pay-cash` | `#2A9D6F` | Espèces (ajusté : `#17694F` trop peu saturé pour un graphique) |
 | `--whatsapp` | `#1E8752` | Boutons WhatsApp (texte blanc, contraste ≥ 4.5:1) |
 
 Vignettes de produits sans photo : fond de la couleur du sac (noir `#2A2521`, marron `#8A5530`, caramel `#C99A6B`, sable `#E2D3BE`, bleu nuit `#1F2A44`) avec une icône de sac en trait clair. Dès qu'une photo existe, elle remplace la vignette (`object-fit: cover`).

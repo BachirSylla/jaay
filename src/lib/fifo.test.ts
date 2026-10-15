@@ -25,3 +25,13 @@ describe("fill", () => {
     expect(fill("{a} et {b}", { a: 1 })).toBe("1 et {b}");
   });
 });
+
+describe("plural", () => {
+  it("uses French plural rules", async () => {
+    const { plural } = await import("./i18n");
+    const forms = { one: "{n} vente", other: "{n} ventes" };
+    expect(plural(0, forms)).toBe("0 vente");
+    expect(plural(1, forms)).toBe("1 vente");
+    expect(plural(4, forms)).toBe("4 ventes");
+  });
+});
