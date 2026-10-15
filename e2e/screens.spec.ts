@@ -90,7 +90,11 @@ test("capture all screens", async ({ browser }) => {
       const { context, page } = await newPage(browser, width, theme);
       const suffix = `${theme}-${width}`;
 
-      for (const [name, route] of publicRoutes.filter(([n]) => wanted(n))) {
+      const catalogRoutes: [string, string][] = [
+        ["catalogue", `/b/${shop.slug}`],
+        ["catalogue-modele", `/b/${shop.slug}/${demo.products[0].id}`],
+      ];
+      for (const [name, route] of [...publicRoutes, ...catalogRoutes].filter(([n]) => wanted(n))) {
         await page.goto(route);
         await capture(page, `${name}-${suffix}`);
       }

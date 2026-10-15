@@ -13,6 +13,8 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
+  // The dev server compiles routes on first use: a few workers keep pages responsive.
+  workers: 3,
   reporter: "list",
   use: {
     baseURL: `http://localhost:${PORT}`,
@@ -22,7 +24,8 @@ export default defineConfig({
     {
       name: "mobile",
       // Account journeys run once, on desktop: they create real accounts on the dev project.
-      testIgnore: /(shop|screens|referentials|stock|sales|supplier-account|dashboard).spec.ts/,
+      testIgnore:
+        /(shop|screens|referentials|stock|sales|supplier-account|dashboard|catalog).spec.ts/,
       use: { ...devices["iPhone 13"], defaultBrowserType: "chromium" },
     },
     {
