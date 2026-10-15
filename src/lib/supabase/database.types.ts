@@ -109,6 +109,153 @@ export type Database = {
           },
         ]
       }
+      expenses: {
+        Row: {
+          amount: number
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          category: Database["public"]["Enums"]["expense_category"]
+          created_at: string
+          created_by: string | null
+          id: string
+          note: string | null
+          reception_id: string | null
+          shop_id: string
+          spent_at: string
+          status: Database["public"]["Enums"]["op_status"]
+          supplier_id: string | null
+        }
+        Insert: {
+          amount: number
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          category?: Database["public"]["Enums"]["expense_category"]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          reception_id?: string | null
+          shop_id: string
+          spent_at?: string
+          status?: Database["public"]["Enums"]["op_status"]
+          supplier_id?: string | null
+        }
+        Update: {
+          amount?: number
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          category?: Database["public"]["Enums"]["expense_category"]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          reception_id?: string | null
+          shop_id?: string
+          spent_at?: string
+          status?: Database["public"]["Enums"]["op_status"]
+          supplier_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_reception_id_shop_id_fkey"
+            columns: ["reception_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "receptions"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "expenses_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_supplier_id_shop_id_fkey"
+            columns: ["supplier_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id", "shop_id"]
+          },
+        ]
+      }
+      lots: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          qty_available: number | null
+          qty_received: number
+          qty_returned: number
+          qty_sold: number
+          received_at: string
+          reception_id: string
+          shop_id: string
+          supplier_id: string
+          unit_cost: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          qty_available?: number | null
+          qty_received: number
+          qty_returned?: number
+          qty_sold?: number
+          received_at: string
+          reception_id: string
+          shop_id: string
+          supplier_id: string
+          unit_cost: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          qty_available?: number | null
+          qty_received?: number
+          qty_returned?: number
+          qty_sold?: number
+          received_at?: string
+          reception_id?: string
+          shop_id?: string
+          supplier_id?: string
+          unit_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lots_product_id_shop_id_fkey"
+            columns: ["product_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "lots_reception_id_shop_id_fkey"
+            columns: ["reception_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "receptions"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "lots_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lots_supplier_id_shop_id_fkey"
+            columns: ["supplier_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id", "shop_id"]
+          },
+        ]
+      }
       product_photos: {
         Row: {
           created_at: string
@@ -238,6 +385,63 @@ export type Database = {
         }
         Relationships: []
       }
+      receptions: {
+        Row: {
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          note: string | null
+          received_at: string
+          shop_id: string
+          status: Database["public"]["Enums"]["op_status"]
+          supplier_id: string
+        }
+        Insert: {
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          received_at?: string
+          shop_id: string
+          status?: Database["public"]["Enums"]["op_status"]
+          supplier_id: string
+        }
+        Update: {
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          received_at?: string
+          shop_id?: string
+          status?: Database["public"]["Enums"]["op_status"]
+          supplier_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receptions_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receptions_supplier_id_shop_id_fkey"
+            columns: ["supplier_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id", "shop_id"]
+          },
+        ]
+      }
       shop_members: {
         Row: {
           created_at: string
@@ -355,9 +559,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cancel_reception: {
+        Args: { p_reason: string; p_reception_id: string }
+        Returns: undefined
+      }
       create_default_categories: {
         Args: { p_shop_id: string }
         Returns: undefined
+      }
+      create_reception: {
+        Args: {
+          p_delivery_fee?: number
+          p_items: Json
+          p_note?: string
+          p_received_at: string
+          p_shop_id: string
+          p_supplier_id: string
+        }
+        Returns: string
       }
       create_shop: {
         Args: { p_name: string; p_slug?: string; p_whatsapp_phone?: string }
@@ -382,6 +601,42 @@ export type Database = {
         }
       }
       find_user_id_by_email: { Args: { p_email: string }; Returns: string }
+      get_reception_lines: {
+        Args: { p_reception_id: string }
+        Returns: {
+          lot_id: string
+          product_id: string
+          qty_received: number
+          qty_returned: number
+          qty_sold: number
+          unit_cost: number
+        }[]
+      }
+      get_receptions: {
+        Args: { p_shop_id: string }
+        Returns: {
+          cancel_reason: string
+          created_at: string
+          created_by_name: string
+          delivery_fee: number
+          id: string
+          note: string
+          received_at: string
+          status: Database["public"]["Enums"]["op_status"]
+          supplier_id: string
+          supplier_name: string
+          total_cost: number
+          total_qty: number
+        }[]
+      }
+      get_stock: {
+        Args: { p_shop_id: string }
+        Returns: {
+          is_low: boolean
+          product_id: string
+          qty_available: number
+        }[]
+      }
       has_shop_role: {
         Args: {
           p_roles: Database["public"]["Enums"]["shop_role"][]
@@ -397,6 +652,8 @@ export type Database = {
     }
     Enums: {
       customer_type: "individual" | "reseller"
+      expense_category: "delivery" | "packaging" | "advertising" | "other"
+      op_status: "active" | "cancelled"
       shop_role: "owner" | "admin" | "manager"
     }
     CompositeTypes: {
@@ -529,6 +786,8 @@ export const Constants = {
   public: {
     Enums: {
       customer_type: ["individual", "reseller"],
+      expense_category: ["delivery", "packaging", "advertising", "other"],
+      op_status: ["active", "cancelled"],
       shop_role: ["owner", "admin", "manager"],
     },
   },
