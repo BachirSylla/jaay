@@ -39,16 +39,146 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          is_platform_admin: boolean
+          phone: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id: string
+          is_platform_admin?: boolean
+          phone?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          is_platform_admin?: boolean
+          phone?: string | null
+        }
+        Relationships: []
+      }
+      shop_members: {
+        Row: {
+          created_at: string
+          role: Database["public"]["Enums"]["shop_role"]
+          shop_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          role: Database["public"]["Enums"]["shop_role"]
+          shop_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          role?: Database["public"]["Enums"]["shop_role"]
+          shop_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_members_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shops: {
+        Row: {
+          catalog_enabled: boolean
+          created_at: string
+          created_by: string | null
+          currency: string
+          id: string
+          logo_path: string | null
+          name: string
+          next_sale_number: number
+          show_public_prices: boolean
+          slug: string
+          whatsapp_phone: string | null
+        }
+        Insert: {
+          catalog_enabled?: boolean
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          id?: string
+          logo_path?: string | null
+          name: string
+          next_sale_number?: number
+          show_public_prices?: boolean
+          slug: string
+          whatsapp_phone?: string | null
+        }
+        Update: {
+          catalog_enabled?: boolean
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          id?: string
+          logo_path?: string | null
+          name?: string
+          next_sale_number?: number
+          show_public_prices?: boolean
+          slug?: string
+          whatsapp_phone?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_shop: {
+        Args: { p_name: string; p_slug?: string; p_whatsapp_phone?: string }
+        Returns: {
+          catalog_enabled: boolean
+          created_at: string
+          created_by: string | null
+          currency: string
+          id: string
+          logo_path: string | null
+          name: string
+          next_sale_number: number
+          show_public_prices: boolean
+          slug: string
+          whatsapp_phone: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "shops"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      find_user_id_by_email: { Args: { p_email: string }; Returns: string }
+      has_shop_role: {
+        Args: {
+          p_roles: Database["public"]["Enums"]["shop_role"][]
+          p_shop_id: string
+        }
+        Returns: boolean
+      }
+      is_shop_member: { Args: { p_shop_id: string }; Returns: boolean }
+      reserved_shop_slugs: { Args: never; Returns: string[] }
+      shares_shop_with: { Args: { p_user_id: string }; Returns: boolean }
+      slugify: { Args: { p_value: string }; Returns: string }
     }
     Enums: {
-      [_ in never]: never
+      shop_role: "owner" | "admin" | "manager"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -178,6 +308,8 @@ export const Constants = {
     Enums: {},
   },
   public: {
-    Enums: {},
+    Enums: {
+      shop_role: ["owner", "admin", "manager"],
+    },
   },
 } as const

@@ -17,7 +17,7 @@
     "db:push": "node scripts/with-env.mjs supabase db push",
     "db:seed": "node scripts/with-env.mjs supabase db push --include-seed",
     "db:types": "node scripts/with-env.mjs supabase gen types typescript --linked > src/lib/supabase/database.types.ts",
-    "db:test": "node scripts/with-env.mjs supabase test db --linked"
+    "db:test": "node scripts/db-test.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
