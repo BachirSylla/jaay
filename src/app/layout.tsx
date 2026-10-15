@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, DM_Sans } from "next/font/google";
+import { Providers } from "@/components/layout/Providers";
 import { ThemeScript } from "@/components/layout/ThemeScript";
 import { fr } from "@/messages/fr";
 import "./globals.css";
@@ -21,6 +22,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
+  // Lets the bottom tab bar use the iPhone safe area (env(safe-area-inset-bottom)).
+  viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#F2F2EF" },
     { media: "(prefers-color-scheme: dark)", color: "#12100E" },
@@ -34,7 +37,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         <ThemeScript />
       </head>
-      <body>{children}</body>
+      <body>
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

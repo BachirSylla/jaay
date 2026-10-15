@@ -1,25 +1,10 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { SegmentedControl } from "@/components/shared/SegmentedControl";
-import { applyThemePreference, readThemePreference, type ThemePreference } from "@/lib/theme";
+import { setThemePreference } from "@/lib/theme";
+import { useThemePreference } from "@/lib/use-theme-preference";
 import { fr } from "@/messages/fr";
-
-const listeners = new Set<() => void>();
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  const media = window.matchMedia("(prefers-color-scheme: dark)");
-  const onSystemChange = () => {
-    if (readThemePreference() === "system") applyThemePreference("system");
-  };
-  media.addEventListener("change", onSystemChange);
-  return () => {
-    listeners.delete(listener);
-    media.removeEventListener("change", onSystemChange);
-  };
-}
 
 const options = [
   { value: "light", label: fr.theme.light, icon: <Sun aria-hidden="true" /> },
@@ -28,21 +13,14 @@ const options = [
 ] as const;
 
 export function ThemeToggle({ className }: { className?: string }) {
-  const preference = useSyncExternalStore<ThemePreference>(
-    subscribe,
-    readThemePreference,
-    () => "system",
-  );
+  const preference = useThemePreference();
 
   return (
     <SegmentedControl
       aria-label={fr.theme.label}
       options={options}
       value={preference}
-      onValueChange={(next) => {
-        applyThemePreference(next);
-        listeners.forEach((listener) => listener());
-      }}
+      onValueChange={setThemePreference}
       className={className}
     />
   );
