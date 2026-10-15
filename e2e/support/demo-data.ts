@@ -112,3 +112,36 @@ export async function seedDemoData(client: Client, shopId: string) {
 
   return { suppliers, products, customers };
 }
+
+type Demo = Awaited<ReturnType<typeof seedDemoData>>;
+
+/** Two receptions from the main supplier: older lot at 5 000, newer at 5 500 (FIFO cases). */
+export async function seedDemoStock(client: Client, shopId: string, demo: Demo) {
+  const [cabas, seau, dos, pochette] = demo.products;
+  const supplier = demo.suppliers[0];
+  const first = must(
+    await client.rpc("create_reception", {
+      p_shop_id: shopId,
+      p_supplier_id: supplier.id,
+      p_received_at: "2026-09-01T10:00:00Z",
+      p_items: [
+        { product_id: cabas.id, quantity: 10, unit_cost: 5000 },
+        { product_id: seau.id, quantity: 6, unit_cost: 8000 },
+        { product_id: dos.id, quantity: 4, unit_cost: 9500 },
+        { product_id: pochette.id, quantity: 2, unit_cost: 3500 },
+      ],
+      p_delivery_fee: 2000,
+      p_note: "Premier dépôt de la saison.",
+    }),
+  );
+  const second = must(
+    await client.rpc("create_reception", {
+      p_shop_id: shopId,
+      p_supplier_id: supplier.id,
+      p_received_at: "2026-09-20T10:00:00Z",
+      p_items: [{ product_id: cabas.id, quantity: 10, unit_cost: 5500 }],
+      p_delivery_fee: 1500,
+    }),
+  );
+  return { receptionIds: [first, second] };
+}
