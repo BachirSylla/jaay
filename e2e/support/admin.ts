@@ -49,7 +49,40 @@ export async function deleteE2EData() {
     .eq("role", "owner")
     .in("user_id", ids);
   const shopIds = (owned ?? []).map((row) => row.shop_id);
-  if (shopIds.length) await admin.from("shops").delete().in("id", shopIds);
+  if (shopIds.length) {
+    // Photos live in Storage under <shop_id>/<product_id>/: remove them before the shops.
+    for (const shopId of shopIds) {
+      const bucket = admin.storage.from("product-photos");
+      const { data: folders } = await bucket.list(shopId);
+      for (const folder of folders ?? []) {
+        const { data: files } = await bucket.list(`${shopId}/${folder.name}`);
+        const paths = (files ?? []).map((file) => `${shopId}/${folder.name}/${file.name}`);
+        if (paths.length) await bucket.remove(paths);
+      }
+    }
+    await admin.from("shops").delete().in("id", shopIds);
+  }
 
   for (const id of ids) await admin.auth.admin.deleteUser(id);
+}
+
+/** Owner account + shop created through create_shop (as the owner), for e2e journeys. */
+export async function seedOwnerShop(label: string, fullName: string, shopName: string) {
+  const owner = await createE2EUser(label, fullName);
+  const client = createClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    { auth: { persistSession: false } },
+  );
+  const { error: signInError } = await client.auth.signInWithPassword({
+    email: owner.email,
+    password: E2E_PASSWORD,
+  });
+  if (signInError) throw signInError;
+  const { data: shop, error } = await client.rpc("create_shop", {
+    p_name: shopName,
+    p_whatsapp_phone: "+221771234567",
+  });
+  if (error) throw error;
+  return { owner, shop, client };
 }

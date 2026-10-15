@@ -1,0 +1,114 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "../../src/lib/supabase/database.types";
+
+type Client = SupabaseClient<Database>;
+
+function must<T>(result: { data: T | null; error: unknown }): T {
+  if (result.error) throw result.error;
+  if (result.data === null) throw new Error("no data");
+  return result.data;
+}
+
+/**
+ * Realistic shop content for e2e and visual checks, written with the OWNER's session
+ * (so RLS applies exactly as in the app). Extended phase after phase.
+ */
+export async function seedDemoData(client: Client, shopId: string) {
+  const categories = must(await client.from("categories").select("id, name").eq("shop_id", shopId));
+  const category = (name: string) => categories.find((c) => c.name === name)?.id ?? null;
+
+  const suppliers = must(
+    await client
+      .from("suppliers")
+      .insert(
+        [
+          {
+            shop_id: shopId,
+            name: "Ibrahima Maroquinerie",
+            phone: "+221765554433",
+            address: "Marché HLM, Dakar",
+            notes: "Livre le mardi.",
+          },
+          { shop_id: shopId, name: "Atelier Ndèye", phone: "+221781234567" },
+        ],
+        { defaultToNull: false },
+      )
+      .select("id, name"),
+  );
+
+  const products = must(
+    await client
+      .from("products")
+      .insert(
+        [
+          {
+            shop_id: shopId,
+            name: "Cabas cuir grainé",
+            color: "Noir",
+            category_id: category("Sacs à main"),
+            suggested_price: 8000,
+            reseller_price: 7000,
+            low_stock_threshold: 2,
+          },
+          {
+            shop_id: shopId,
+            name: "Sac seau tressé",
+            color: "Caramel",
+            category_id: category("Sacs à main"),
+            suggested_price: 12500,
+            reseller_price: 11000,
+          },
+          {
+            shop_id: shopId,
+            name: "Sac à dos city",
+            color: "Bleu nuit",
+            category_id: category("Sacs à dos"),
+            suggested_price: 15000,
+            reseller_price: 13000,
+          },
+          {
+            shop_id: shopId,
+            name: "Pochette soirée",
+            color: "Sable",
+            category_id: category("Autres"),
+            suggested_price: 6000,
+            reseller_price: 5000,
+            low_stock_threshold: 3,
+          },
+          {
+            shop_id: shopId,
+            name: "Sac de voyage week-end",
+            color: "Marron",
+            category_id: category("Sacs de voyage"),
+            suggested_price: 25000,
+            reseller_price: 22000,
+            is_public: false,
+          },
+        ],
+        { defaultToNull: false },
+      )
+      .select("id, name"),
+  );
+
+  const customers = must(
+    await client
+      .from("customers")
+      .insert(
+        [
+          {
+            shop_id: shopId,
+            name: "Mariama Ba",
+            phone: "+221701112233",
+            type: "reseller",
+            notes: "Revend à Thiès.",
+          },
+          { shop_id: shopId, name: "Aïssatou Diallo", phone: "+221775556677", type: "individual" },
+          { shop_id: shopId, name: "Khady Sow", type: "individual" },
+        ],
+        { defaultToNull: false },
+      )
+      .select("id, name"),
+  );
+
+  return { suppliers, products, customers };
+}

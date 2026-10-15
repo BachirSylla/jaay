@@ -1,42 +1,19 @@
 import { mkdirSync } from "node:fs";
 import { expect, test, type Browser, type Page } from "@playwright/test";
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "../src/lib/supabase/database.types";
-import { createE2EUser, E2E_PASSWORD } from "./support/admin";
+import { E2E_PASSWORD, seedOwnerShop } from "./support/admin";
+import { seedDemoData } from "./support/demo-data";
 
 // Visual check of every screen at 375 / 768 / 1280 px, light and dark.
-// On demand only: SCREENS=1 pnpm test:e2e screens  → PNG files in ./screens (git-ignored).
-// Each capture also asserts there is no horizontal page scroll.
+// On demand only:  SCREENS=1 pnpm exec playwright test screens --project=desktop
+// Optional filter: SCREENS_ONLY=stock,clients  (route name contains one of the words).
+// PNG files go to ./screens (git-ignored). Each capture asserts there is no horizontal scroll.
 test.skip(!process.env.SCREENS, "visual capture runs on demand (SCREENS=1)");
-test.setTimeout(10 * 60_000);
+test.setTimeout(15 * 60_000);
 
 const OUT = "screens";
 const WIDTHS = [375, 768, 1280] as const;
 const THEMES = ["light", "dark"] as const;
-
-const PUBLIC_ROUTES = ["/connexion", "/inscription"];
-/** Shop routes, relative to /s/<slug>. */
-const SHOP_ROUTES = ["", "/parametres", "/parametres/membres", "/ventes"];
-
-async function seedShop() {
-  const owner = await createE2EUser("screens", "Awa Diop");
-  const client = createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-    { auth: { persistSession: false } },
-  );
-  const { error: signInError } = await client.auth.signInWithPassword({
-    email: owner.email,
-    password: E2E_PASSWORD,
-  });
-  if (signInError) throw signInError;
-  const { data: shop, error } = await client.rpc("create_shop", {
-    p_name: "Chez Awa Maroquinerie",
-    p_whatsapp_phone: "+221771234567",
-  });
-  if (error) throw error;
-  return { owner, slug: shop.slug };
-}
+const ONLY = (process.env.SCREENS_ONLY ?? "").split(",").filter(Boolean);
 
 async function signIn(page: Page, email: string) {
   await page.goto("/connexion");
@@ -65,29 +42,53 @@ async function newPage(browser: Browser, width: number, theme: (typeof THEMES)[n
   return { context, page: await context.newPage() };
 }
 
+const wanted = (name: string) => ONLY.length === 0 || ONLY.some((word) => name.includes(word));
+
 test("capture all screens", async ({ browser }) => {
   mkdirSync(OUT, { recursive: true });
-  const { owner, slug } = await seedShop();
+  const { owner, shop, client } = await seedOwnerShop(
+    "screens",
+    "Awa Diop",
+    "Chez Awa Maroquinerie",
+  );
+  const demo = await seedDemoData(client, shop.id);
+
+  const publicRoutes: [string, string][] = [
+    ["connexion", "/connexion"],
+    ["inscription", "/inscription"],
+  ];
+  const base = `/s/${shop.slug}`;
+  const shopRoutes: [string, string][] = [
+    ["accueil", base],
+    ["parametres", `${base}/parametres`],
+    ["membres", `${base}/parametres/membres`],
+    ["fournisseurs", `${base}/fournisseurs`],
+    ["fournisseur-fiche", `${base}/fournisseurs/${demo.suppliers[0].id}`],
+    ["stock", `${base}/stock`],
+    ["modele-nouveau", `${base}/modeles/nouveau`],
+    ["modele-fiche", `${base}/modeles/${demo.products[0].id}`],
+    ["clients", `${base}/clients`],
+    ["client-fiche", `${base}/clients/${demo.customers[0].id}`],
+  ];
 
   for (const theme of THEMES) {
     for (const width of WIDTHS) {
       const { context, page } = await newPage(browser, width, theme);
       const suffix = `${theme}-${width}`;
 
-      for (const route of PUBLIC_ROUTES) {
+      for (const [name, route] of publicRoutes.filter(([n]) => wanted(n))) {
         await page.goto(route);
-        await capture(page, `${route.slice(1)}-${suffix}`);
-      }
-
-      await signIn(page, owner.email);
-      for (const route of SHOP_ROUTES) {
-        await page.goto(`/s/${slug}${route}`);
-        const name = route ? route.slice(1).replaceAll("/", "-") : "accueil";
         await capture(page, `${name}-${suffix}`);
       }
 
-      if (width < 768) {
-        await page.goto(`/s/${slug}`);
+      await signIn(page, owner.email);
+      for (const [name, route] of shopRoutes.filter(([n]) => wanted(n))) {
+        await page.goto(route);
+        await capture(page, `${name}-${suffix}`);
+      }
+
+      if (width < 768 && wanted("menu")) {
+        await page.goto(base);
         await page.getByRole("button", { name: "Plus" }).click();
         await page.getByRole("dialog").waitFor();
         await capture(page, `menu-plus-${suffix}`);
