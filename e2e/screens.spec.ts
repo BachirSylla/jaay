@@ -62,7 +62,8 @@ test("capture all screens", async ({ browser }) => {
   ];
   const base = `/s/${shop.slug}`;
   const shopRoutes: [string, string][] = [
-    ["accueil", base],
+    ["accueil", `${base}?periode=mois`],
+    ["rapports", `${base}/rapports`],
     ["parametres", `${base}/parametres`],
     ["membres", `${base}/parametres/membres`],
     ["fournisseurs", `${base}/fournisseurs`],
