@@ -14,8 +14,8 @@ const eslintConfig = defineConfig([
     },
   },
   {
-    // CLI scripts print their results.
-    files: ["scripts/**"],
+    // CLI scripts and measurement specs print their results.
+    files: ["scripts/**", "e2e/**"],
     rules: { "no-console": "off" },
   },
   globalIgnores([
