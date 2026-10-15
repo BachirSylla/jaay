@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useDeferredValue, useState } from "react";
 import { ChevronRight, Phone, Plus, Truck } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { Money } from "@/components/shared/Money";
 import { matchesSearch, SearchInput } from "@/components/shared/SearchInput";
 import { Button } from "@/components/ui/button";
 import { useShop } from "@/features/shop/shop-context";
@@ -15,7 +16,14 @@ import { SupplierFormDialog } from "./SupplierFormDialog";
 
 const t = fr.suppliers;
 
-export function SuppliersList({ suppliers }: { suppliers: Supplier[] }) {
+export function SuppliersList({
+  suppliers,
+  balances = {},
+}: {
+  suppliers: Supplier[];
+  /** Balance per supplier id (owner/admin). */
+  balances?: Record<string, number>;
+}) {
   const { shop } = useShop();
   const [query, setQuery] = useState("");
   const [showArchived, setShowArchived] = useState(false);
@@ -91,6 +99,20 @@ export function SuppliersList({ suppliers }: { suppliers: Supplier[] }) {
                     </span>
                   ) : null}
                 </span>
+                {balances[supplier.id] ? (
+                  <span className="flex flex-col items-end">
+                    <Money
+                      amount={Math.abs(balances[supplier.id])}
+                      size="md"
+                      variant={balances[supplier.id] < 0 ? "positive" : "default"}
+                    />
+                    <span className="text-xs text-muted-foreground">
+                      {balances[supplier.id] < 0
+                        ? fr.supplierAccount.advance
+                        : fr.supplierAccount.balanceDue}
+                    </span>
+                  </span>
+                ) : null}
                 <ChevronRight aria-hidden="true" className="size-5 text-subtle" />
               </Link>
             </li>

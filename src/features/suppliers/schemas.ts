@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { optionalPhoneSchema } from "@/features/shop/schemas";
+import { MAX_AMOUNT } from "@/lib/amount";
 import { fr } from "@/messages/fr";
 
 const optionalText = (max: number) =>
@@ -17,3 +18,24 @@ export const supplierSchema = z.object({
 });
 export type SupplierInput = z.input<typeof supplierSchema>;
 export type SupplierValues = z.output<typeof supplierSchema>;
+
+export const supplierPaymentSchema = z.object({
+  // Empty while typing, required on submit.
+  amount: z
+    .number()
+    .int()
+    .min(1)
+    .max(MAX_AMOUNT)
+    .nullable()
+    .refine((value) => value !== null, { error: fr.errors.INVALID_AMOUNT })
+    .transform((value) => value as number),
+  method: z.enum(["wave", "orange_money", "cash"]),
+  paidAt: z.iso.date(),
+  note: z
+    .string()
+    .trim()
+    .max(500)
+    .transform((value) => (value === "" ? null : value)),
+});
+export type SupplierPaymentInput = z.input<typeof supplierPaymentSchema>;
+export type SupplierPaymentValues = z.output<typeof supplierPaymentSchema>;

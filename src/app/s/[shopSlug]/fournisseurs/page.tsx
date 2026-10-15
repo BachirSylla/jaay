@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { requireShopAction } from "@/features/shop/require";
 import { SupplierFormDialog } from "@/features/suppliers/components/SupplierFormDialog";
 import { SuppliersList } from "@/features/suppliers/components/SuppliersList";
-import { listSuppliers } from "@/features/suppliers/queries";
+import { getSupplierBalances, listSuppliers } from "@/features/suppliers/queries";
 import { fr } from "@/messages/fr";
 
 export const metadata: Metadata = { title: fr.suppliers.title };
@@ -24,7 +24,10 @@ export default function SuppliersPage({ params }: PageProps<"/s/[shopSlug]/fourn
 async function Suppliers({ params }: { params: Promise<{ shopSlug: string }> }) {
   const { context, allowed } = await requireShopAction(params, "viewSuppliers");
   if (!allowed) return <Forbidden title={fr.suppliers.title} />;
-  const suppliers = await listSuppliers(context.shop.id);
+  const [suppliers, balances] = await Promise.all([
+    listSuppliers(context.shop.id),
+    getSupplierBalances(context.shop.id),
+  ]);
 
   return (
     <div className="max-w-4xl">
@@ -44,7 +47,10 @@ async function Suppliers({ params }: { params: Promise<{ shopSlug: string }> }) 
           ) : null
         }
       />
-      <SuppliersList suppliers={suppliers} />
+      <SuppliersList
+        suppliers={suppliers}
+        balances={Object.fromEntries(Object.entries(balances).map(([id, b]) => [id, b.balance]))}
+      />
     </div>
   );
 }
