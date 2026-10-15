@@ -145,3 +145,72 @@ export async function seedDemoStock(client: Client, shopId: string, demo: Demo) 
   );
   return { receptionIds: [first, second] };
 }
+
+/** A few sales on different channels and payment methods (needs seedDemoStock). */
+export async function seedDemoSales(client: Client, shopId: string, demo: Demo) {
+  const [cabas, seau, dos, pochette] = demo.products;
+  const [mariama, aissatou] = demo.customers;
+  const sale = async (
+    customerId: string | null,
+    type: "individual" | "reseller",
+    channel: "whatsapp" | "instagram" | "in_person" | "tiktok",
+    soldAt: string,
+    items: { product_id: string; quantity: number; unit_price: number }[],
+    payments: { method: "wave" | "orange_money" | "cash"; amount: number }[],
+  ) =>
+    must(
+      await client.rpc("create_sale", {
+        p_shop_id: shopId,
+        p_customer_id: customerId as string,
+        p_customer_type: type,
+        p_channel: channel,
+        p_sold_at: soldAt,
+        p_items: items,
+        p_payments: payments,
+      }),
+    );
+
+  const now = Date.now();
+  const at = (hoursAgo: number) => new Date(now - hoursAgo * 3600_000).toISOString();
+  const sales = [
+    await sale(
+      mariama.id,
+      "reseller",
+      "whatsapp",
+      at(50),
+      [{ product_id: cabas.id, quantity: 3, unit_price: 7000 }],
+      [{ method: "wave", amount: 21000 }],
+    ),
+    await sale(
+      aissatou.id,
+      "individual",
+      "instagram",
+      at(26),
+      [
+        { product_id: seau.id, quantity: 1, unit_price: 12500 },
+        { product_id: pochette.id, quantity: 1, unit_price: 6000 },
+      ],
+      [
+        { method: "orange_money", amount: 10000 },
+        { method: "cash", amount: 8500 },
+      ],
+    ),
+    await sale(
+      null,
+      "individual",
+      "in_person",
+      at(2),
+      [{ product_id: cabas.id, quantity: 1, unit_price: 8000 }],
+      [{ method: "cash", amount: 8000 }],
+    ),
+    await sale(
+      null,
+      "individual",
+      "tiktok",
+      at(1),
+      [{ product_id: dos.id, quantity: 1, unit_price: 15000 }],
+      [{ method: "wave", amount: 15000 }],
+    ),
+  ];
+  return { saleIds: sales.map((s) => s.id) };
+}

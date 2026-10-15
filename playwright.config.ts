@@ -22,7 +22,7 @@ export default defineConfig({
     {
       name: "mobile",
       // Account journeys run once, on desktop: they create real accounts on the dev project.
-      testIgnore: /(shop|screens|referentials|stock).spec.ts/,
+      testIgnore: /(shop|screens|referentials|stock|sales).spec.ts/,
       use: { ...devices["iPhone 13"], defaultBrowserType: "chromium" },
     },
     {
