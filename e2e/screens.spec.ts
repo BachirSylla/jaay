@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import { E2E_PASSWORD, seedOwnerShop } from "./support/admin";
-import { seedDemoData, seedDemoSales, seedDemoStock } from "./support/demo-data";
+import { seedDemoAccount, seedDemoData, seedDemoSales, seedDemoStock } from "./support/demo-data";
 
 // Visual check of every screen at 375 / 768 / 1280 px, light and dark.
 // On demand only:  SCREENS=1 pnpm exec playwright test screens --project=desktop
@@ -54,6 +54,7 @@ test("capture all screens", async ({ browser }) => {
   const demo = await seedDemoData(client, shop.id);
   const stock = await seedDemoStock(client, shop.id, demo);
   const sales = await seedDemoSales(client, shop.id, demo);
+  const account = await seedDemoAccount(client, shop.id, demo);
 
   const publicRoutes: [string, string][] = [
     ["connexion", "/connexion"],
@@ -75,6 +76,10 @@ test("capture all screens", async ({ browser }) => {
     ["receptions", `${base}/receptions`],
     ["reception-nouvelle", `${base}/receptions/nouvelle`],
     ["reception-fiche", `${base}/receptions/${stock.receptionIds[0]}`],
+    ["retours", `${base}/retours`],
+    ["retour-nouveau", `${base}/retours/nouveau?fournisseur=${demo.suppliers[0].id}`],
+    ["retour-fiche", `${base}/retours/${account.returnId}`],
+    ["depenses", `${base}/depenses`],
     ["clients", `${base}/clients`],
     ["client-fiche", `${base}/clients/${demo.customers[0].id}`],
   ];

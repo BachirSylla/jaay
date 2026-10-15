@@ -214,3 +214,40 @@ export async function seedDemoSales(client: Client, shopId: string, demo: Demo) 
   ];
   return { saleIds: sales.map((s) => s.id) };
 }
+
+/** A supplier payment, a return of unsold bags and two expenses (needs seedDemoSales). */
+export async function seedDemoAccount(client: Client, shopId: string, demo: Demo) {
+  const supplier = demo.suppliers[0];
+  must(
+    await client.rpc("create_supplier_payment", {
+      p_shop_id: shopId,
+      p_supplier_id: supplier.id,
+      p_amount: 20000,
+      p_method: "wave",
+      p_note: "Acompte",
+    }),
+  );
+  const returnId = must(
+    await client.rpc("create_return", {
+      p_shop_id: shopId,
+      p_supplier_id: supplier.id,
+      p_returned_at: new Date().toISOString(),
+      p_items: [{ product_id: demo.products[3].id, quantity: 1 }],
+      p_delivery_fee: 1000,
+      p_note: "Pochette abîmée",
+    }),
+  );
+  must(
+    await client
+      .from("expenses")
+      .insert(
+        [
+          { shop_id: shopId, category: "packaging", amount: 2500, note: "Sachets kraft" },
+          { shop_id: shopId, category: "advertising", amount: 5000, note: "Sponsoring Instagram" },
+        ],
+        { defaultToNull: false },
+      )
+      .select("id"),
+  );
+  return { returnId };
+}
