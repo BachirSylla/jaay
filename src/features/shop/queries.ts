@@ -63,7 +63,9 @@ export const getShopContext = cache(async (slug: string): Promise<ShopContext | 
   const supabase = await createClient();
   const { data: shop, error } = await supabase
     .from("shops")
-    .select("id, name, slug, whatsapp_phone, show_public_prices, catalog_enabled, currency")
+    .select(
+      "id, name, slug, whatsapp_phone, show_public_prices, catalog_enabled, currency, logo_path",
+    )
     .eq("id", membership.id)
     .maybeSingle();
   if (error) throw error;
@@ -81,6 +83,7 @@ export const getShopContext = cache(async (slug: string): Promise<ShopContext | 
       showPublicPrices: shop.show_public_prices,
       catalogEnabled: shop.catalog_enabled,
       currency: shop.currency,
+      logoPath: shop.logo_path,
     },
   };
 });

@@ -8,6 +8,7 @@ import { PageSkeleton } from "@/components/layout/PageSkeleton";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { CategoriesManager } from "@/features/catalog/components/CategoriesManager";
 import { listCategories } from "@/features/catalog/queries";
+import { LogoUploader } from "@/features/shop/components/LogoUploader";
 import { ShopSettingsForm } from "@/features/shop/components/ShopSettingsForm";
 import { requireShopAction } from "@/features/shop/require";
 import { fr } from "@/messages/fr";
@@ -36,6 +37,10 @@ async function Settings({ params }: { params: Promise<{ shopSlug: string }> }) {
         <section className="min-w-0 rounded-2xl border border-line bg-surface p-5 sm:p-6 lg:col-span-2">
           <h2 className="text-lg">{t.general}</h2>
           <p className="mb-5 text-sm text-muted-foreground">{t.generalHint}</p>
+          <div className="mb-6 flex flex-col gap-2">
+            <span className="text-sm font-semibold">{t.logo}</span>
+            <LogoUploader />
+          </div>
           <ShopSettingsForm />
         </section>
 

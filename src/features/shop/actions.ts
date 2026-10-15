@@ -4,6 +4,8 @@ import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { type ActionResult, toErrorCode } from "@/lib/errors";
 import type { ShopRole } from "@/lib/permissions";
+import { refreshPublicCatalog } from "@/features/catalog/cache";
+import { SHOP_LOGOS_BUCKET } from "@/lib/storage";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -58,6 +60,7 @@ export async function updateShopSettings(
   // RLS silently filters rows the user may not update.
   if (!data?.length) return { ok: false, error: "FORBIDDEN" };
 
+  await refreshPublicCatalog(shopId);
   refresh();
   return { ok: true, data: undefined };
 }
@@ -182,6 +185,36 @@ export async function removeMember(shopId: string, userId: string): Promise<Acti
   if (error) return { ok: false, error: toErrorCode(error) };
   if (!data?.length) return { ok: false, error: "FORBIDDEN" };
 
+  refresh();
+  return { ok: true, data: undefined };
+}
+
+/** Sets (or removes) the shop logo, uploaded by the browser under "<shop_id>/". */
+export async function setShopLogo(shopId: string, logoPath: string | null): Promise<ActionResult> {
+  if (logoPath !== null && !logoPath.startsWith(`${shopId}/`)) {
+    return { ok: false, error: "VALIDATION" };
+  }
+
+  const supabase = await createClient();
+  const { data: current } = await supabase
+    .from("shops")
+    .select("logo_path")
+    .eq("id", shopId)
+    .maybeSingle();
+  const { data, error } = await supabase
+    .from("shops")
+    .update({ logo_path: logoPath })
+    .eq("id", shopId)
+    .select("id");
+  if (error) return { ok: false, error: toErrorCode(error) };
+  if (!data?.length) return { ok: false, error: "FORBIDDEN" };
+
+  // The previous file is no longer used (a leftover file would be harmless).
+  if (current?.logo_path && current.logo_path !== logoPath) {
+    await supabase.storage.from(SHOP_LOGOS_BUCKET).remove([current.logo_path]);
+  }
+
+  await refreshPublicCatalog(shopId);
   refresh();
   return { ok: true, data: undefined };
 }

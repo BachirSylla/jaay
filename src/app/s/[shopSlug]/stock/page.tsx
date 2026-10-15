@@ -4,12 +4,15 @@ import { Suspense } from "react";
 import { PackagePlus, Plus } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageSkeleton } from "@/components/layout/PageSkeleton";
+import { ShareLinkButton } from "@/components/shared/ShareLinkButton";
 import { Button } from "@/components/ui/button";
 import { ProductGrid } from "@/features/catalog/components/ProductGrid";
 import { listCategories, listProducts } from "@/features/catalog/queries";
 import { requireShop } from "@/features/shop/require";
 import { getStock } from "@/features/stock/queries";
 import { formatQty } from "@/lib/format";
+import { fill } from "@/lib/i18n";
+import { catalogUrl } from "@/lib/site";
 import { can } from "@/lib/permissions";
 import { fr } from "@/messages/fr";
 
@@ -51,6 +54,13 @@ async function Stock({ params }: { params: Promise<{ shopSlug: string }> }) {
         actions={
           products.length > 0 ? (
             <>
+              {shop.catalogEnabled ? (
+                <ShareLinkButton
+                  url={catalogUrl(shop.slug)}
+                  title={fill(fr.publicCatalog.metaTitle, { shop: shop.name })}
+                  label={fr.publicCatalog.share}
+                />
+              ) : null}
               <Button asChild variant="outline">
                 <Link href={`/s/${shop.slug}/receptions/nouvelle`}>
                   <PackagePlus data-icon="inline-start" aria-hidden="true" />

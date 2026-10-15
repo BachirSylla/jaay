@@ -12,6 +12,7 @@ export type ShopDetails = {
   showPublicPrices: boolean;
   catalogEnabled: boolean;
   currency: string;
+  logoPath: string | null;
 };
 
 export type ShopContext = {

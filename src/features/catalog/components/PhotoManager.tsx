@@ -7,7 +7,7 @@ import { ProductThumb } from "@/components/shared/ProductThumb";
 import { Button } from "@/components/ui/button";
 import { useShop } from "@/features/shop/shop-context";
 import { errorMessage } from "@/lib/errors";
-import { compressImage } from "@/lib/image";
+import { compressImage, previewPathFor } from "@/lib/image";
 import { PRODUCT_PHOTOS_BUCKET } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/client";
 import { fr } from "@/messages/fr";
@@ -35,15 +35,23 @@ export function PhotoManager({ product, editable }: { product: Product; editable
       const room = MAX_PHOTOS - product.photos.length;
       for (const file of Array.from(files).slice(0, room)) {
         const image = await compressImage(file);
+        // JPEG copy for WhatsApp / social previews (they do not all read WebP).
+        const preview = await compressImage(file, { maxSize: 1200, quality: 0.8, format: "jpeg" });
         const path = `${shop.id}/${product.id}/${crypto.randomUUID()}.${image.extension}`;
-        const { error } = await supabase.storage
-          .from(PRODUCT_PHOTOS_BUCKET)
-          .upload(path, image.blob, { contentType: image.contentType, cacheControl: "31536000" });
+        const bucket = supabase.storage.from(PRODUCT_PHOTOS_BUCKET);
+        const { error } = await bucket.upload(path, image.blob, {
+          contentType: image.contentType,
+          cacheControl: "31536000",
+        });
         if (error) throw error;
+        await bucket.upload(previewPathFor(path), preview.blob, {
+          contentType: preview.contentType,
+          cacheControl: "31536000",
+        });
 
         const result = await registerProductPhoto(shop.id, product.id, path);
         if (!result.ok) {
-          await supabase.storage.from(PRODUCT_PHOTOS_BUCKET).remove([path]);
+          await supabase.storage.from(PRODUCT_PHOTOS_BUCKET).remove([path, previewPathFor(path)]);
           toast.error(errorMessage(result.error));
           return;
         }

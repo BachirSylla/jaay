@@ -2,9 +2,11 @@
 
 import { refresh } from "next/cache";
 import { type ActionResult, toErrorCode } from "@/lib/errors";
+import { previewPathFor } from "@/lib/image";
 import { PRODUCT_PHOTOS_BUCKET } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
 import { isUuid } from "@/lib/uuid";
+import { refreshPublicCatalog } from "./cache";
 import { categoryNameSchema, productSchema, type ProductValues } from "./schemas";
 
 function parseProduct(values: ProductValues) {
@@ -42,6 +44,7 @@ export async function createProduct(
     .select("id")
     .single();
   if (error) return { ok: false, error: toErrorCode(error) };
+  await refreshPublicCatalog(shopId);
   return { ok: true, data: { id: data.id } };
 }
 
@@ -63,6 +66,7 @@ export async function updateProduct(
   if (error) return { ok: false, error: toErrorCode(error) };
   if (!data?.length) return { ok: false, error: "FORBIDDEN" };
 
+  await refreshPublicCatalog(shopId);
   refresh();
   return { ok: true, data: undefined };
 }
@@ -84,6 +88,7 @@ export async function setProductArchived(
   if (error) return { ok: false, error: toErrorCode(error) };
   if (!data?.length) return { ok: false, error: "FORBIDDEN" };
 
+  await refreshPublicCatalog(shopId);
   refresh();
   return { ok: true, data: undefined };
 }
@@ -114,6 +119,7 @@ export async function registerProductPhoto(
   });
   if (error) return { ok: false, error: toErrorCode(error) };
 
+  await refreshPublicCatalog(shopId);
   refresh();
   return { ok: true, data: undefined };
 }
@@ -132,8 +138,11 @@ export async function deleteProductPhoto(shopId: string, photoId: string): Promi
   if (!data?.length) return { ok: false, error: "FORBIDDEN" };
 
   // The row is gone; a file left behind (network error) is harmless.
-  await supabase.storage.from(PRODUCT_PHOTOS_BUCKET).remove(data.map((row) => row.storage_path));
+  await supabase.storage
+    .from(PRODUCT_PHOTOS_BUCKET)
+    .remove(data.flatMap((row) => [row.storage_path, previewPathFor(row.storage_path)]));
 
+  await refreshPublicCatalog(shopId);
   refresh();
   return { ok: true, data: undefined };
 }
@@ -166,6 +175,7 @@ export async function setCoverPhoto(
   if (error) return { ok: false, error: toErrorCode(error) };
   if (!data?.length) return { ok: false, error: "FORBIDDEN" };
 
+  await refreshPublicCatalog(shopId);
   refresh();
   return { ok: true, data: undefined };
 }

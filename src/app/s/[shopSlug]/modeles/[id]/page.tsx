@@ -4,9 +4,11 @@ import { Suspense } from "react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageSkeleton } from "@/components/layout/PageSkeleton";
 import { Money } from "@/components/shared/Money";
+import { ShareLinkButton } from "@/components/shared/ShareLinkButton";
 import { PhotoManager } from "@/features/catalog/components/PhotoManager";
 import { ProductActions } from "@/features/catalog/components/ProductActions";
 import { ProductForm } from "@/features/catalog/components/ProductForm";
+import { publicProductUrl } from "@/features/catalog/public-links";
 import { getProduct, listCategories } from "@/features/catalog/queries";
 import { requireShop } from "@/features/shop/require";
 import { getStock } from "@/features/stock/queries";
@@ -53,7 +55,18 @@ async function ProductDetail({ params }: { params: Promise<{ shopSlug: string; i
             {fr.stock.available} : {formatQty(stock[product.id]?.available ?? 0)}
           </span>
         }
-        actions={canManage ? <ProductActions product={product} /> : null}
+        actions={
+          <>
+            {shop.catalogEnabled && product.isPublic && !product.archivedAt ? (
+              <ShareLinkButton
+                url={publicProductUrl(shop.slug, product.id)}
+                title={`${product.name} — ${shop.name}`}
+                label={fr.publicCatalog.shareModel}
+              />
+            ) : null}
+            {canManage ? <ProductActions product={product} /> : null}
+          </>
+        }
       />
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
