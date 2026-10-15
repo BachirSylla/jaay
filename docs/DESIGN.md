@@ -15,6 +15,8 @@ Identité « atelier de maroquinerie » : la sobriété d'une boutique de cuir h
 
 Définis en variables CSS dans `src/app/globals.css`, exposés à Tailwind (`bg-ground`, `text-ink`, `bg-cognac`…). Thème sombre via la classe `.dark` (et `prefers-color-scheme` par défaut).
 
+Exception de nommage : `--muted` (texte secondaire) s'utilise via `text-muted-foreground`, car `bg-muted` désigne `--surface-muted` (convention shadcn/ui).
+
 | Token | Clair | Sombre | Usage |
 | --- | --- | --- | --- |
 | `--ground` | `#F2F2EF` | `#12100E` | Fond de page |
@@ -38,6 +40,7 @@ Définis en variables CSS dans `src/app/globals.css`, exposés à Tailwind (`bg-
 | `--mint` | `#9FD8C2` | `#9FD8C2` | Positif sur espresso |
 | `--danger` | `#9A3B12` | `#F08A5D` | Alerte |
 | `--danger-soft` | `#FBE3D6` | `#3A1D12` | Fond alerte |
+| `--on-cognac` | `#FFFFFF` | `#12100E` | Texte sur fond cognac (blanc sur `#C8783A` = 3.4:1, insuffisant) |
 
 Couleurs fonctionnelles :
 
@@ -46,7 +49,7 @@ Couleurs fonctionnelles :
 | `--pay-wave` | `#1D7FC2` | Wave |
 | `--pay-om` | `#E57F14` | Orange Money |
 | `--pay-cash` | `#17694F` | Espèces |
-| `--whatsapp` | `#1F8A54` | Boutons WhatsApp (texte blanc, contraste ≥ 4.5:1) |
+| `--whatsapp` | `#1E8752` | Boutons WhatsApp (texte blanc, contraste ≥ 4.5:1) |
 
 Vignettes de produits sans photo : fond de la couleur du sac (noir `#2A2521`, marron `#8A5530`, caramel `#C99A6B`, sable `#E2D3BE`, bleu nuit `#1F2A44`) avec une icône de sac en trait clair. Dès qu'une photo existe, elle remplace la vignette (`object-fit: cover`).
 

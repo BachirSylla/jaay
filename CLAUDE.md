@@ -115,7 +115,7 @@ src/
     catalog/      …
     shop/         …                 # boutique, membres, rôles
   lib/
-    supabase/     { client.ts, server.ts, proxy.ts, admin.ts, database.types.ts }
+    supabase/     { client.ts, server.ts, proxy.ts, admin.ts, env.ts, database.types.ts }
     format.ts                       # formatMoney, formatDate, formatQty
     permissions.ts                  # can(role, action)
     utils.ts
@@ -188,7 +188,7 @@ Tout est détaillé dans `docs/DESIGN.md`. À retenir :
 
 Travaille **phase par phase**, dans l'ordre. Au début de chaque phase : propose un plan court (fichiers, migrations, composants), attends la validation, puis code. À la fin : liste ce qui a été fait et coche la phase ici.
 
-- [ ] **Phase 0 — Socle** : projet Next.js, Tailwind, shadcn/ui, polices, tokens clair/sombre, CLI Supabase liée au projet dev en ligne, clients Supabase (browser/server/admin), ESLint/Prettier/Vitest/Playwright, `src/messages/fr.ts`, `formatMoney`, page de démo des composants de base.
+- [x] **Phase 0 — Socle** : projet Next.js, Tailwind, shadcn/ui, polices, tokens clair/sombre, CLI Supabase liée au projet dev en ligne, clients Supabase (browser/server/admin), ESLint/Prettier/Vitest/Playwright, `src/messages/fr.ts`, `formatMoney`, page de démo des composants de base.
 - [ ] **Phase 1 — Comptes et boutiques** : migrations `profiles`, `shops`, `shop_members`, fonctions `is_shop_member`, `has_shop_role`, RPC `create_shop` ; pages connexion, inscription, bienvenue ; AppShell responsive (sidebar + barre d'onglets) ; gestion des membres ; tests pgTAP d'isolation entre boutiques.
 - [ ] **Phase 2 — Référentiels** : fournisseurs, catégories (par défaut), modèles (+ photos dans Storage, compressées en WebP côté client), clients ; listes, fiches, formulaires, archivage.
 - [ ] **Phase 3 — Stock** : `receptions`, `lots`, RPC `create_reception` / `cancel_reception`, `get_stock` ; écran Stock (grille de cartes, filtres, alerte stock bas) ; écran Nouvelle réception.
