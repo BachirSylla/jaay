@@ -24,6 +24,8 @@ export function toErrorCode(error: unknown): ErrorCode {
   switch (code) {
     case "42501":
       return "FORBIDDEN";
+    case "23505":
+      return "DUPLICATE";
     case "invalid_credentials":
       return "INVALID_CREDENTIALS";
     case "email_exists":
