@@ -13,9 +13,11 @@ export default function HomePage() {
       </span>
       <h1 className="text-[40px] leading-tight">{fr.app.name}</h1>
       <p className="text-lg text-muted-foreground">{fr.app.tagline}</p>
-      <Button asChild size="lg">
-        <Link href="/demo">{fr.demo.title}</Link>
-      </Button>
+      {process.env.NODE_ENV !== "production" ? (
+        <Button asChild size="lg">
+          <Link href="/demo">{fr.demo.title}</Link>
+        </Button>
+      ) : null}
     </main>
   );
 }
