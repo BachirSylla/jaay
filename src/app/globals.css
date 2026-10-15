@@ -33,6 +33,8 @@
   --mint: #9fd8c2;
   --danger: #9a3b12;
   --danger-soft: #fbe3d6;
+  /* Negative amounts on espresso cards (same in both themes). */
+  --danger-on-espresso: #f08a5d;
 
   --pay-wave: #1d7fc2;
   --pay-om: #e57f14;
@@ -99,6 +101,7 @@
   --color-mint: var(--mint);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
+  --color-danger-on-espresso: var(--danger-on-espresso);
   --color-pay-wave: var(--pay-wave);
   --color-pay-om: var(--pay-om);
   --color-pay-cash: var(--pay-cash);

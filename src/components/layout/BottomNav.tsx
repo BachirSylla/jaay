@@ -17,6 +17,8 @@ export function BottomNav() {
   const { shop } = useShop();
   const [moreOpen, setMoreOpen] = useState(false);
   const base = `/s/${shop.slug}`;
+  // The sale screen has its own fixed footer ("Encaisser"): no tab bar there.
+  const focused = pathname === `${base}/ventes/nouvelle`;
 
   const isActive = (tab: Tab) => {
     const href = base + tab.path;
@@ -53,6 +55,7 @@ export function BottomNav() {
     <>
       <nav
         aria-label={fr.nav.mainNavigation}
+        hidden={focused}
         className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
       >
         <ul className="mx-auto flex max-w-lg items-end px-2">
