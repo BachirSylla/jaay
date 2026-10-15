@@ -1113,6 +1113,7 @@ export type Database = {
         Args: { p_from: string; p_shop_id: string; p_to: string }
         Returns: Json
       }
+      get_public_catalog: { Args: { p_slug: string }; Returns: Json }
       get_reception_lines: {
         Args: { p_reception_id: string }
         Returns: {
