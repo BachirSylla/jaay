@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { CustomerFormDialog } from "@/features/customers/components/CustomerFormDialog";
 import { CustomersList } from "@/features/customers/components/CustomersList";
 import { listCustomers } from "@/features/customers/queries";
+import { getCustomerStats } from "@/features/sales/queries";
 import { requireShop } from "@/features/shop/require";
 import { fr } from "@/messages/fr";
 
@@ -22,7 +23,7 @@ export default function CustomersPage({ params }: PageProps<"/s/[shopSlug]/clien
 
 async function Customers({ params }: { params: Promise<{ shopSlug: string }> }) {
   const { shop } = await requireShop(params);
-  const customers = await listCustomers(shop.id);
+  const [customers, stats] = await Promise.all([listCustomers(shop.id), getCustomerStats(shop.id)]);
 
   return (
     <div className="max-w-4xl">
@@ -42,7 +43,7 @@ async function Customers({ params }: { params: Promise<{ shopSlug: string }> }) 
           ) : null
         }
       />
-      <CustomersList customers={customers} />
+      <CustomersList customers={customers} stats={stats} />
     </div>
   );
 }

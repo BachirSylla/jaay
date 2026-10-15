@@ -9,6 +9,8 @@ import { matchesSearch, SearchInput } from "@/components/shared/SearchInput";
 import { WhatsAppLink } from "@/components/shared/WhatsAppLink";
 import { Button } from "@/components/ui/button";
 import { useShop } from "@/features/shop/shop-context";
+import { formatMoney } from "@/lib/format";
+import { fill } from "@/lib/i18n";
 import { initials } from "@/lib/initials";
 import { formatPhone } from "@/lib/phone";
 import { fr } from "@/messages/fr";
@@ -18,7 +20,18 @@ import { CustomerFormDialog } from "./CustomerFormDialog";
 const t = fr.customers;
 type Filter = "all" | CustomerType;
 
-export function CustomersList({ customers }: { customers: Customer[] }) {
+export type CustomerStats = Record<
+  string,
+  { purchases: number; totalSpent: number; lastPurchaseAt: string | null }
+>;
+
+export function CustomersList({
+  customers,
+  stats = {},
+}: {
+  customers: Customer[];
+  stats?: CustomerStats;
+}) {
   const { shop } = useShop();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
@@ -115,7 +128,14 @@ export function CustomersList({ customers }: { customers: Customer[] }) {
                     ) : null}
                   </span>
                   <span className="truncate text-sm text-muted-foreground">
-                    {customer.phone ? formatPhone(customer.phone) : "—"}
+                    {[
+                      customer.phone ? formatPhone(customer.phone) : null,
+                      stats[customer.id]
+                        ? `${fill(fr.sales.purchases, { n: stats[customer.id].purchases })} · ${formatMoney(stats[customer.id].totalSpent)}`
+                        : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ") || "—"}
                   </span>
                 </span>
                 <ChevronRight
