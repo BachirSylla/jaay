@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { Plus } from "lucide-react";
+import { PackagePlus, Plus } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageSkeleton } from "@/components/layout/PageSkeleton";
 import { Button } from "@/components/ui/button";
 import { ProductGrid } from "@/features/catalog/components/ProductGrid";
 import { listCategories, listProducts } from "@/features/catalog/queries";
 import { requireShop } from "@/features/shop/require";
+import { getStock } from "@/features/stock/queries";
+import { formatQty } from "@/lib/format";
 import { can } from "@/lib/permissions";
 import { fr } from "@/messages/fr";
 
@@ -23,12 +25,14 @@ export default function StockPage({ params }: PageProps<"/s/[shopSlug]/stock">) 
 
 async function Stock({ params }: { params: Promise<{ shopSlug: string }> }) {
   const { shop, role } = await requireShop(params);
-  const [products, categories] = await Promise.all([
+  const [products, categories, stock] = await Promise.all([
     listProducts(shop.id),
     listCategories(shop.id),
+    getStock(shop.id),
   ]);
   const canManage = can(role, "manageCatalog");
-  const activeCount = products.filter((p) => !p.archivedAt).length;
+  const active = products.filter((p) => !p.archivedAt);
+  const totalBags = active.reduce((sum, p) => sum + (stock[p.id]?.available ?? 0), 0);
 
   const addButton = (
     <Button asChild>
@@ -43,10 +47,27 @@ async function Stock({ params }: { params: Promise<{ shopSlug: string }> }) {
     <>
       <PageHeader
         title={fr.catalog.title}
-        description={`${activeCount} ${fr.catalog.models.toLowerCase()}`}
-        actions={canManage && products.length > 0 ? addButton : null}
+        description={`${formatQty(totalBags)} · ${active.length} ${fr.catalog.models.toLowerCase()}`}
+        actions={
+          products.length > 0 ? (
+            <>
+              <Button asChild variant="outline">
+                <Link href={`/s/${shop.slug}/receptions/nouvelle`}>
+                  <PackagePlus data-icon="inline-start" aria-hidden="true" />
+                  {fr.stock.newReception}
+                </Link>
+              </Button>
+              {canManage ? addButton : null}
+            </>
+          ) : null
+        }
       />
-      <ProductGrid products={products} categories={categories} emptyAction={addButton} />
+      <ProductGrid
+        products={products}
+        categories={categories}
+        stock={stock}
+        emptyAction={addButton}
+      />
     </>
   );
 }

@@ -16,6 +16,7 @@ import { ProductCard } from "./ProductCard";
 const t = fr.catalog;
 const ALL = "all";
 const NONE = "none";
+const LOW = "low";
 
 /** Searchable, filterable grid of products (2 columns on phones up to 5 on desktops). */
 export function ProductGrid({
@@ -41,7 +42,12 @@ export function ProductGrid({
   const archivedCount = products.filter((p) => p.archivedAt).length;
   const visible = pool.filter(
     (p) =>
-      (category === ALL || (category === NONE ? !p.categoryId : p.categoryId === category)) &&
+      (category === ALL ||
+        (category === LOW
+          ? Boolean(stock?.[p.id]?.isLow)
+          : category === NONE
+            ? !p.categoryId
+            : p.categoryId === category)) &&
       (!deferredQuery ||
         matchesSearch(`${p.name} ${p.color ?? ""} ${p.categoryName ?? ""}`, deferredQuery)),
   );
@@ -56,6 +62,8 @@ export function ProductGrid({
       }))
       .filter((chip) => chip.count > 0),
   ];
+  const lowCount = stock ? pool.filter((p) => stock[p.id]?.isLow).length : 0;
+  if (lowCount > 0) chips.splice(1, 0, { value: LOW, label: fr.stock.lowOnly, count: lowCount });
   if (pool.some((p) => !p.categoryId)) {
     chips.push({
       value: NONE,
@@ -104,7 +112,9 @@ export function ProductGrid({
                 stock={
                   stock ? (
                     <span className="text-[13px] font-semibold text-muted-foreground tabular-nums">
-                      {formatQty(stock[product.id]?.available ?? 0)}
+                      {(stock[product.id]?.available ?? 0) > 0
+                        ? formatQty(stock[product.id]?.available ?? 0)
+                        : fr.stock.outOfStock}
                     </span>
                   ) : undefined
                 }

@@ -9,6 +9,8 @@ import { ProductActions } from "@/features/catalog/components/ProductActions";
 import { ProductForm } from "@/features/catalog/components/ProductForm";
 import { getProduct, listCategories } from "@/features/catalog/queries";
 import { requireShop } from "@/features/shop/require";
+import { getStock } from "@/features/stock/queries";
+import { formatQty } from "@/lib/format";
 import { can } from "@/lib/permissions";
 import { isUuid } from "@/lib/uuid";
 import { fr } from "@/messages/fr";
@@ -28,9 +30,10 @@ export default function ProductPage({ params }: PageProps<"/s/[shopSlug]/modeles
 async function ProductDetail({ params }: { params: Promise<{ shopSlug: string; id: string }> }) {
   const { shop, role } = await requireShop(params);
   const { id } = await params;
-  const [product, categories] = await Promise.all([
+  const [product, categories, stock] = await Promise.all([
     isUuid(id) ? getProduct(shop.id, id) : null,
     listCategories(shop.id),
+    getStock(shop.id),
   ]);
   if (!product) notFound();
   const canManage = can(role, "manageCatalog");
@@ -45,6 +48,11 @@ async function ProductDetail({ params }: { params: Promise<{ shopSlug: string; i
             : [product.categoryName, product.color].filter(Boolean).join(" · ") || undefined
         }
         title={product.name}
+        description={
+          <span className={stock[product.id]?.isLow ? "font-semibold text-danger" : undefined}>
+            {fr.stock.available} : {formatQty(stock[product.id]?.available ?? 0)}
+          </span>
+        }
         actions={canManage ? <ProductActions product={product} /> : null}
       />
 
