@@ -2,7 +2,9 @@ import { expect, test } from "@playwright/test";
 
 test("home page links to the component demo", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1, name: "Jaay" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Votre dépôt-vente, enfin sous contrôle." }),
+  ).toBeVisible();
   await page.getByRole("link", { name: "Composants de base" }).click();
   await expect(page).toHaveURL(/\/demo$/);
 });
