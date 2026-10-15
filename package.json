@@ -15,7 +15,7 @@
     "test:e2e": "playwright test",
     "supabase": "node scripts/with-env.mjs supabase",
     "db:push": "node scripts/with-env.mjs supabase db push",
-    "db:seed": "node scripts/with-env.mjs supabase db push --include-seed",
+    "db:seed": "node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/seed-demo.ts",
     "db:types": "node scripts/with-env.mjs supabase gen types typescript --linked > src/lib/supabase/database.types.ts",
     "db:test": "node scripts/db-test.mjs"
   },

@@ -61,7 +61,7 @@ pnpm build                   # build de production
 
 pnpm supabase migration new <nom>   # nouvelle migration SQL
 pnpm db:push                         # = supabase db push (applique les migrations au projet dev en ligne)
-pnpm db:seed                         # applique supabase/seed.sql au projet dev
+pnpm db:seed                         # = scripts/seed-demo.ts : compte + boutique de démo complète sur le projet dev (DEMO_EMAIL, DEMO_PASSWORD)
 pnpm db:types                        # = supabase gen types typescript --linked > src/lib/supabase/database.types.ts
 pnpm db:test                         # = scripts/db-test.mjs : tests pgTAP de supabase/tests via supabase db query --linked (sans Docker)
 ```
