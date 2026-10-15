@@ -121,6 +121,7 @@ export type Database = {
           id: string
           note: string | null
           reception_id: string | null
+          return_id: string | null
           shop_id: string
           spent_at: string
           status: Database["public"]["Enums"]["op_status"]
@@ -137,6 +138,7 @@ export type Database = {
           id?: string
           note?: string | null
           reception_id?: string | null
+          return_id?: string | null
           shop_id: string
           spent_at?: string
           status?: Database["public"]["Enums"]["op_status"]
@@ -153,6 +155,7 @@ export type Database = {
           id?: string
           note?: string | null
           reception_id?: string | null
+          return_id?: string | null
           shop_id?: string
           spent_at?: string
           status?: Database["public"]["Enums"]["op_status"]
@@ -164,6 +167,13 @@ export type Database = {
             columns: ["reception_id", "shop_id"]
             isOneToOne: false
             referencedRelation: "receptions"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "expenses_return_id_shop_id_fkey"
+            columns: ["return_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "returns"
             referencedColumns: ["id", "shop_id"]
           },
           {
@@ -435,6 +445,119 @@ export type Database = {
           },
           {
             foreignKeyName: "receptions_supplier_id_shop_id_fkey"
+            columns: ["supplier_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id", "shop_id"]
+          },
+        ]
+      }
+      return_items: {
+        Row: {
+          id: string
+          lot_id: string
+          product_id: string
+          quantity: number
+          return_id: string
+          shop_id: string
+        }
+        Insert: {
+          id?: string
+          lot_id: string
+          product_id: string
+          quantity: number
+          return_id: string
+          shop_id: string
+        }
+        Update: {
+          id?: string
+          lot_id?: string
+          product_id?: string
+          quantity?: number
+          return_id?: string
+          shop_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "return_items_lot_id_shop_id_fkey"
+            columns: ["lot_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "lots"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "return_items_product_id_shop_id_fkey"
+            columns: ["product_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "return_items_return_id_shop_id_fkey"
+            columns: ["return_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "returns"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "return_items_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      returns: {
+        Row: {
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          note: string | null
+          returned_at: string
+          shop_id: string
+          status: Database["public"]["Enums"]["op_status"]
+          supplier_id: string
+        }
+        Insert: {
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          returned_at?: string
+          shop_id: string
+          status?: Database["public"]["Enums"]["op_status"]
+          supplier_id: string
+        }
+        Update: {
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          returned_at?: string
+          shop_id?: string
+          status?: Database["public"]["Enums"]["op_status"]
+          supplier_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "returns_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "returns_supplier_id_shop_id_fkey"
             columns: ["supplier_id", "shop_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
@@ -744,6 +867,69 @@ export type Database = {
         }
         Relationships: []
       }
+      supplier_payments: {
+        Row: {
+          amount: number
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          method: Database["public"]["Enums"]["payment_method"]
+          note: string | null
+          paid_at: string
+          shop_id: string
+          status: Database["public"]["Enums"]["op_status"]
+          supplier_id: string
+        }
+        Insert: {
+          amount: number
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          method: Database["public"]["Enums"]["payment_method"]
+          note?: string | null
+          paid_at?: string
+          shop_id: string
+          status?: Database["public"]["Enums"]["op_status"]
+          supplier_id: string
+        }
+        Update: {
+          amount?: number
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          method?: Database["public"]["Enums"]["payment_method"]
+          note?: string | null
+          paid_at?: string
+          shop_id?: string
+          status?: Database["public"]["Enums"]["op_status"]
+          supplier_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_payments_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_payments_supplier_id_shop_id_fkey"
+            columns: ["supplier_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id", "shop_id"]
+          },
+        ]
+      }
       suppliers: {
         Row: {
           address: string | null
@@ -790,12 +976,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cancel_expense: {
+        Args: { p_expense_id: string; p_reason: string }
+        Returns: undefined
+      }
       cancel_reception: {
         Args: { p_reason: string; p_reception_id: string }
         Returns: undefined
       }
+      cancel_return: {
+        Args: { p_reason: string; p_return_id: string }
+        Returns: undefined
+      }
       cancel_sale: {
         Args: { p_reason: string; p_sale_id: string }
+        Returns: undefined
+      }
+      cancel_supplier_payment: {
+        Args: { p_payment_id: string; p_reason: string }
         Returns: undefined
       }
       create_default_categories: {
@@ -808,6 +1006,17 @@ export type Database = {
           p_items: Json
           p_note?: string
           p_received_at: string
+          p_shop_id: string
+          p_supplier_id: string
+        }
+        Returns: string
+      }
+      create_return: {
+        Args: {
+          p_delivery_fee?: number
+          p_items: Json
+          p_note?: string
+          p_returned_at: string
           p_shop_id: string
           p_supplier_id: string
         }
@@ -871,6 +1080,17 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      create_supplier_payment: {
+        Args: {
+          p_amount: number
+          p_method: Database["public"]["Enums"]["payment_method"]
+          p_note?: string
+          p_paid_at?: string
+          p_shop_id: string
+          p_supplier_id: string
+        }
+        Returns: string
+      }
       find_user_id_by_email: { Args: { p_email: string }; Returns: string }
       get_customer_stats: {
         Args: { p_shop_id: string }
@@ -915,6 +1135,41 @@ export type Database = {
           is_low: boolean
           product_id: string
           qty_available: number
+        }[]
+      }
+      get_supplier_balances: {
+        Args: { p_shop_id: string }
+        Returns: {
+          balance: number
+          due: number
+          paid: number
+          qty_in_stock: number
+          qty_received: number
+          qty_returned: number
+          qty_sold: number
+          supplier_id: string
+        }[]
+      }
+      get_supplier_lots: {
+        Args: { p_supplier_id: string }
+        Returns: {
+          lot_id: string
+          product_id: string
+          qty_available: number
+          qty_received: number
+          qty_returned: number
+          qty_sold: number
+          received_at: string
+          reception_id: string
+          unit_cost: number
+        }[]
+      }
+      get_supplier_stock: {
+        Args: { p_shop_id: string }
+        Returns: {
+          product_id: string
+          qty_available: number
+          supplier_id: string
         }[]
       }
       has_shop_role: {
