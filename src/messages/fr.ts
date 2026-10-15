@@ -161,6 +161,14 @@ export const fr = {
     text: "Cette page n'existe pas, ou vous n'y avez pas accès.",
     action: "Retour à l'accueil",
   },
+  offline: {
+    title: "Pas de connexion",
+    text: "Jaay a besoin d'internet pour enregistrer vos ventes. Vérifiez votre connexion puis réessayez.",
+    retry: "Réessayer",
+    banner: "Pas de connexion. Ce que vous saisissez est conservé.",
+    back: "Connexion rétablie.",
+    draftRestored: "Votre vente en cours a été retrouvée.",
+  },
   forbidden: {
     title: "Accès réservé",
     text: "Cet écran est réservé à la propriétaire et aux administrateurs de la boutique.",

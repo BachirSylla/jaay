@@ -22,6 +22,11 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
   title: { default: fr.app.name, template: `%s · ${fr.app.name}` },
   description: fr.app.tagline,
+  applicationName: fr.app.name,
+  // iOS "Add to Home Screen": full screen, espresso status bar, Jaay icon.
+  appleWebApp: { capable: true, title: fr.app.name, statusBarStyle: "black-translucent" },
+  icons: { apple: [{ url: "/icons/apple-180.png", sizes: "180x180" }] },
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
