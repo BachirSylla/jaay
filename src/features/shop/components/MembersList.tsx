@@ -77,7 +77,7 @@ function MemberRow({ member }: { member: Member }) {
             <Select value={member.role} onValueChange={changeRole} disabled={pending}>
               <SelectTrigger
                 aria-label={`${t.changeRole} — ${member.fullName}`}
-                className="h-11 min-w-40 rounded-lg max-sm:flex-1"
+                className="min-w-40 max-sm:flex-1"
               >
                 <SelectValue />
               </SelectTrigger>

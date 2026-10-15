@@ -133,7 +133,7 @@ export function AddMemberDialog() {
               render={({ field }) => (
                 <>
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger id="member-role" className="h-12 w-full rounded-lg">
+                    <SelectTrigger id="member-role" className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
