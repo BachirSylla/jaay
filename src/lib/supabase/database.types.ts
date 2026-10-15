@@ -1101,6 +1101,18 @@ export type Database = {
           total_spent: number
         }[]
       }
+      get_daily_sales: {
+        Args: { p_from: string; p_shop_id: string; p_to: string }
+        Returns: {
+          day: string
+          revenue: number
+          sales_count: number
+        }[]
+      }
+      get_dashboard: {
+        Args: { p_from: string; p_shop_id: string; p_to: string }
+        Returns: Json
+      }
       get_reception_lines: {
         Args: { p_reception_id: string }
         Returns: {
