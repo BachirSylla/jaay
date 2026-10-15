@@ -6,6 +6,8 @@ import { Forbidden } from "@/components/layout/Forbidden";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageSkeleton } from "@/components/layout/PageSkeleton";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
+import { CategoriesManager } from "@/features/catalog/components/CategoriesManager";
+import { listCategories } from "@/features/catalog/queries";
 import { ShopSettingsForm } from "@/features/shop/components/ShopSettingsForm";
 import { requireShopAction } from "@/features/shop/require";
 import { fr } from "@/messages/fr";
@@ -25,6 +27,7 @@ export default function SettingsPage({ params }: PageProps<"/s/[shopSlug]/parame
 async function Settings({ params }: { params: Promise<{ shopSlug: string }> }) {
   const { context, allowed } = await requireShopAction(params, "manageSettings");
   if (!allowed) return <Forbidden title={t.title} />;
+  const categories = await listCategories(context.shop.id);
 
   return (
     <>
@@ -50,6 +53,14 @@ async function Settings({ params }: { params: Promise<{ shopSlug: string }> }) {
             </span>
             <ChevronRight aria-hidden="true" className="size-5 text-subtle" />
           </Link>
+
+          <section className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
+            <div>
+              <h2 className="text-lg">{fr.categories.title}</h2>
+              <p className="text-sm text-muted-foreground">{fr.categories.hint}</p>
+            </div>
+            <CategoriesManager categories={categories} />
+          </section>
 
           <section className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
             <h2 className="text-lg">{t.appearance}</h2>
