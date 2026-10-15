@@ -1,3 +1,8 @@
+/** JPEG copy of a product photo used for link previews (Open Graph): "<uuid>.og.jpg". */
+export function previewPathFor(storagePath: string): string {
+  return storagePath.replace(/\.(webp|jpg)$/, ".og.jpg");
+}
+
 export type CompressedImage = { blob: Blob; extension: "webp" | "jpg"; contentType: string };
 
 /**
@@ -6,7 +11,11 @@ export type CompressedImage = { blob: Blob; extension: "webp" | "jpg"; contentTy
  */
 export async function compressImage(
   file: File,
-  { maxSize = 1600, quality = 0.82 }: { maxSize?: number; quality?: number } = {},
+  {
+    maxSize = 1600,
+    quality = 0.82,
+    format = "webp",
+  }: { maxSize?: number; quality?: number; format?: "webp" | "jpeg" } = {},
 ): Promise<CompressedImage> {
   // imageOrientation applies the EXIF rotation of phone photos.
   const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
@@ -25,7 +34,7 @@ export async function compressImage(
   const encode = (type: string) =>
     new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, type, quality));
 
-  const webp = await encode("image/webp");
+  const webp = format === "webp" ? await encode("image/webp") : null;
   if (webp && webp.type === "image/webp") {
     return { blob: webp, extension: "webp", contentType: "image/webp" };
   }

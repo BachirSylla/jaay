@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, DM_Sans } from "next/font/google";
 import { Providers } from "@/components/layout/Providers";
 import { ThemeScript } from "@/components/layout/ThemeScript";
+import { siteUrl } from "@/lib/site";
 import { fr } from "@/messages/fr";
 import "./globals.css";
 
@@ -17,6 +18,8 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
+  // Absolute URLs for Open Graph images and links.
+  metadataBase: new URL(siteUrl()),
   title: { default: fr.app.name, template: `%s · ${fr.app.name}` },
   description: fr.app.tagline,
 };
