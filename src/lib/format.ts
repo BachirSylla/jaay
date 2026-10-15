@@ -67,3 +67,23 @@ export function formatQty(
   const label = pluralRules.select(quantity) === "one" ? unit.one : unit.other;
   return `${formatInteger(quantity)}${NBSP}${label}`;
 }
+
+const dateInputFormat = new Intl.DateTimeFormat("en-CA", {
+  timeZone: TIME_ZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+/** Date as "YYYY-MM-DD" in the Africa/Dakar time zone (value of an <input type="date">). */
+export function toDateInputValue(date: Date | string = new Date()): string {
+  return dateInputFormat.format(typeof date === "string" ? new Date(date) : date);
+}
+
+/**
+ * Business date chosen in a form → timestamp. Today keeps the current time (FIFO order of
+ * same-day operations); another day is set at noon (Dakar is UTC+0).
+ */
+export function businessDateToTimestamp(value: string, now: Date = new Date()): string {
+  return value === toDateInputValue(now) ? now.toISOString() : `${value}T12:00:00.000Z`;
+}

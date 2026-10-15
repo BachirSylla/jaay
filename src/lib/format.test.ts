@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { formatDate, formatInteger, formatMoney, formatMoneyParts, formatQty } from "./format";
+import {
+  businessDateToTimestamp,
+  formatDate,
+  formatInteger,
+  formatMoney,
+  formatMoneyParts,
+  formatQty,
+  toDateInputValue,
+} from "./format";
 
 const NBSP = " ";
 
@@ -46,5 +54,17 @@ describe("formatQty", () => {
     expect(formatQty(0)).toBe(`0${NBSP}sac`);
     expect(formatQty(1)).toBe(`1${NBSP}sac`);
     expect(formatQty(12)).toBe(`12${NBSP}sacs`);
+  });
+});
+
+describe("business dates", () => {
+  it("formats dates for date inputs in Dakar time", () => {
+    expect(toDateInputValue("2026-10-15T23:30:00Z")).toBe("2026-10-15");
+  });
+
+  it("keeps the current time for today and noon for other days", () => {
+    const now = new Date("2026-10-15T09:41:00Z");
+    expect(businessDateToTimestamp("2026-10-15", now)).toBe("2026-10-15T09:41:00.000Z");
+    expect(businessDateToTimestamp("2026-10-12", now)).toBe("2026-10-12T12:00:00.000Z");
   });
 });
