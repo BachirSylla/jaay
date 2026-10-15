@@ -123,6 +123,9 @@ test("owner hides prices, adds a logo, then disables the catalog", async ({ page
   await visitor.goto(`/b/${slug}`);
   await expect(visitor.getByText("Élément introuvable.", { exact: true })).toBeVisible();
   await expect(visitor.getByText("Cabas cuir grainé")).toHaveCount(0);
-  await expect(visitor.locator('meta[name="robots"]').first()).toHaveAttribute("content", /noindex/);
+  await expect(visitor.locator('meta[name="robots"]').first()).toHaveAttribute(
+    "content",
+    /noindex/,
+  );
   await visitor.close();
 });

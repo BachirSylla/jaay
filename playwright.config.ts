@@ -24,6 +24,7 @@ export default defineConfig({
     {
       name: "mobile",
       // Account journeys run once, on desktop: they create real accounts on the dev project.
+      // pwa.spec.ts runs on both: network cuts matter most on phones.
       testIgnore:
         /(shop|screens|referentials|stock|sales|supplier-account|dashboard|catalog).spec.ts/,
       use: { ...devices["iPhone 13"], defaultBrowserType: "chromium" },
