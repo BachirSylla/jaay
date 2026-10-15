@@ -1,26 +1,197 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
+/* Dark theme is driven by the `.dark` class on <html>, set before paint by ThemeScript. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Design tokens (docs/DESIGN.md §2). Raw variables keep the DESIGN.md names.
+ * Naming note: in DESIGN.md `--muted` is the secondary TEXT color. Tailwind follows the
+ * shadcn convention instead: `bg-muted` = --surface-muted, `text-muted-foreground` = --muted.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --ground: #f2f2ef;
+  --surface: #ffffff;
+  --surface-muted: #e7e4df;
+  --ink: #191714;
+  --muted: #6b655e;
+  --subtle: #8a847c;
+  --line: #e3e0da;
+  --line-soft: #eeebe6;
+  --espresso: #211a15;
+  --espresso-ink: #f7f1ea;
+  --espresso-muted: #cdbfb0;
+  --gold: #f2c894;
+  --cognac: #a85a24;
+  --cognac-hover: #7e4119;
+  --cognac-soft: #fff9f4;
+  --cognac-tint: #f6e9dd;
+  --on-cognac: #ffffff;
+  --emerald: #17694f;
+  --emerald-soft: #e5f2ec;
+  --mint: #9fd8c2;
+  --danger: #9a3b12;
+  --danger-soft: #fbe3d6;
+
+  --pay-wave: #1d7fc2;
+  --pay-om: #e57f14;
+  --pay-cash: #17694f;
+  /* DESIGN.md says #1F8A54, which is 4.36:1 with white text; darkened to reach 4.5:1. */
+  --whatsapp: #1e8752;
+
+  --bag-black: #2a2521;
+  --bag-brown: #8a5530;
+  --bag-caramel: #c99a6b;
+  --bag-sand: #e2d3be;
+  --bag-navy: #1f2a44;
+
+  --shadow-fab: 0 10px 24px rgb(168 90 36 / 0.35);
+  --shadow-segment: 0 1px 2px rgb(25 23 20 / 0.08);
+
+  color-scheme: light;
+}
+
+.dark {
+  --ground: #12100e;
+  --surface: #1c1916;
+  --surface-muted: #262220;
+  --ink: #f2ede7;
+  --muted: #a9a097;
+  --subtle: #7f776f;
+  --line: #2e2824;
+  --line-soft: #25211e;
+  --espresso: #0b0907;
+  --cognac: #c8783a;
+  --cognac-hover: #da8c4c;
+  --cognac-soft: #2a1e15;
+  --cognac-tint: #33241a;
+  /* White on #C8783A is 3.4:1; dark text reaches 5.6:1. */
+  --on-cognac: #12100e;
+  --emerald: #4fb892;
+  --emerald-soft: #15302a;
+  --danger: #f08a5d;
+  --danger-soft: #3a1d12;
+
+  color-scheme: dark;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Jaay palette */
+  --color-ground: var(--ground);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-ink: var(--ink);
+  --color-subtle: var(--subtle);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-espresso: var(--espresso);
+  --color-espresso-ink: var(--espresso-ink);
+  --color-espresso-muted: var(--espresso-muted);
+  --color-gold: var(--gold);
+  --color-cognac: var(--cognac);
+  --color-cognac-hover: var(--cognac-hover);
+  --color-cognac-soft: var(--cognac-soft);
+  --color-cognac-tint: var(--cognac-tint);
+  --color-on-cognac: var(--on-cognac);
+  --color-emerald: var(--emerald);
+  --color-emerald-soft: var(--emerald-soft);
+  --color-mint: var(--mint);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-pay-wave: var(--pay-wave);
+  --color-pay-om: var(--pay-om);
+  --color-pay-cash: var(--pay-cash);
+  --color-whatsapp: var(--whatsapp);
+  --color-bag-black: var(--bag-black);
+  --color-bag-brown: var(--bag-brown);
+  --color-bag-caramel: var(--bag-caramel);
+  --color-bag-sand: var(--bag-sand);
+  --color-bag-navy: var(--bag-navy);
+
+  /* shadcn/ui semantic colors, mapped onto the Jaay palette */
+  --color-background: var(--ground);
+  --color-foreground: var(--ink);
+  --color-card: var(--surface);
+  --color-card-foreground: var(--ink);
+  --color-popover: var(--surface);
+  --color-popover-foreground: var(--ink);
+  --color-primary: var(--cognac);
+  --color-primary-foreground: var(--on-cognac);
+  --color-secondary: var(--surface-muted);
+  --color-secondary-foreground: var(--ink);
+  --color-muted: var(--surface-muted);
+  --color-muted-foreground: var(--muted);
+  --color-accent: var(--surface-muted);
+  --color-accent-foreground: var(--ink);
+  --color-destructive: var(--danger);
+  --color-border: var(--line);
+  --color-input: var(--line);
+  --color-ring: var(--cognac);
+  --color-chart-1: var(--cognac);
+  --color-chart-2: var(--emerald);
+  --color-chart-3: var(--gold);
+  --color-chart-4: var(--pay-wave);
+  --color-chart-5: var(--subtle);
+  --color-sidebar: var(--espresso);
+  --color-sidebar-foreground: var(--espresso-ink);
+  --color-sidebar-primary: var(--cognac);
+  --color-sidebar-primary-foreground: var(--on-cognac);
+  --color-sidebar-accent: rgb(247 241 234 / 0.08);
+  --color-sidebar-accent-foreground: var(--espresso-ink);
+  --color-sidebar-border: rgb(247 241 234 / 0.1);
+  --color-sidebar-ring: var(--gold);
+
+  /* Fonts: variables set on <html> by next/font in layout.tsx */
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+
+  /* Radii (DESIGN.md §4) */
+  --radius-sm: 10px;
+  --radius-md: 12px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-2xl: 20px;
+  --radius-3xl: 24px;
+  --radius-4xl: 28px;
+
+  --shadow-fab: var(--shadow-fab);
+  --shadow-segment: var(--shadow-segment);
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply bg-background font-sans text-foreground antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply min-h-dvh bg-background text-[15px] leading-normal;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-display font-bold tracking-tight;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
