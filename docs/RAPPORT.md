@@ -1,6 +1,6 @@
 # Rapport de réalisation — Jaay
 
-Version du 16 octobre 2026. Les phases 0 à 8 de `CLAUDE.md` sont réalisées, sauf la mise en production elle-même : la section 6 en décrit la procédure. Le code est sur `main` (https://github.com/BachirSylla/jaay), la base est en place sur le projet Supabase de développement `jaay-dev` (`bixrtirfupirfbljsszu`).
+Version du 16 octobre 2026. Les phases 0 à 9 de `CLAUDE.md` sont réalisées, sauf la mise en production elle-même : la section 6 en décrit la procédure. Le code est sur `main` (https://github.com/BachirSylla/jaay), la base est en place sur le projet Supabase de développement `jaay-dev` (`bixrtirfupirfbljsszu`).
 
 Documents liés : [`SPEC.md`](SPEC.md), [`DATA_MODEL.md`](DATA_MODEL.md), [`DESIGN.md`](DESIGN.md), [`DECISIONS.md`](DECISIONS.md) (journal détaillé de toutes les décisions, phase par phase).
 
@@ -18,6 +18,7 @@ Les montants sont en FCFA entiers (`12 500 F`), les dates en heure de Dakar, et 
 | **Inscription** `/inscription` | Maquette 6 : nom, e-mail, mot de passe (8 caractères minimum), sans e-mail de confirmation, puis redirection vers `/bienvenue`. |
 | **Connexion** `/connexion` | Ouvre la dernière boutique utilisée, sinon la première, sinon `/bienvenue`. Prend en compte `?next=` (chemins internes uniquement). |
 | **Bienvenue** `/bienvenue` | Création d'une boutique : nom, WhatsApp facultatif, aperçu en direct du lien public. Sert aussi à créer une boutique supplémentaire. |
+| **Mon profil** `/s/<slug>/profil` | Depuis la sidebar (bloc utilisateur) et le menu « Plus » : nom, téléphone, mot de passe (l'ancien est redemandé), thème. Ouvert à tous les rôles. |
 | **Hors ligne** `/hors-ligne` | Servie par le service worker quand une navigation échoue sans réseau. |
 
 ### Espace boutique `/s/<slug>`
@@ -45,7 +46,7 @@ Une boutique inconnue, ou dont l'utilisateur n'est pas membre, donne une page in
 | **Dépenses** | Liste par période, totaux par catégorie, ajout (livraison, emballage, publicité, autre, fournisseur facultatif), annulation ; les frais de livraison liés suivent leur réception ou leur retour. | Ajout et lecture. |
 | **Rapports** | Aujourd'hui / Semaine / Mois / Période libre ; bénéfice net, CA, marge, dépenses, sacs ; ventes par jour, meilleurs modèles, encaissements, canaux, soldes fournisseurs ; **export CSV** (ventes détaillées avec coût et marge, dépenses), au format Excel français. | Accès réservé. |
 | **Paramètres** | Logo, nom, WhatsApp, lien du catalogue, affichage des prix, catalogue activé, catégories, thème. | Accès réservé. |
-| **Membres** | Ajout d'un membre (compte créé avec un mot de passe provisoire, ou compte existant rattaché sans toucher à son mot de passe), changement de rôle, retrait ; le propriétaire est intouchable. | Accès réservé. |
+| **Membres** | Ajout d'un membre (compte créé avec un mot de passe provisoire, ou compte existant rattaché sans toucher à son mot de passe), changement de rôle, retrait, **réinitialisation du mot de passe** (mot de passe provisoire de 12 caractères affiché une fois, à copier) ; le propriétaire est intouchable. La réinitialisation est refusée si le compte appartient aussi à une boutique que l'appelant ne gère pas, ou s'il est propriétaire ailleurs. | Accès réservé. |
 
 ### Catalogue public (sans connexion)
 
@@ -79,6 +80,9 @@ L'app est installable sur iOS et Android : manifest, icône « J » doré sur es
 | `…153938_returns_payments_expenses` | `returns`, `return_items`, `supplier_payments` ; `create_return`, `cancel_return`, `create_supplier_payment`, `cancel_supplier_payment`, `cancel_expense`, `get_supplier_balances`, `get_supplier_lots`, `get_supplier_stock`. |
 | `…155805_dashboard` | `get_dashboard`, `get_daily_sales`. |
 | `…161416_public_catalog` | `get_public_catalog` (accessible sans connexion), bucket `shop-logos`. |
+| `…082913_advisor_fixes` | Corrections des advisors Supabase : un index couvrant pour chaque clé étrangère, index redondants retirés, deux politiques de lecture de `profiles` fusionnées en une seule. |
+| `…083013_advisor_fixes_shop_id` | **Vide**, appliquée par erreur (sans effet) ; gardée car une migration appliquée n'est jamais modifiée. |
+| `…084048_advisor_shop_id_indexes` | Index `shop_id` de `sale_items` et `sale_item_allocations`. |
 
 ### Fonctions RPC (toutes `security definer`, `search_path = ''`, rôle vérifié en premier)
 
@@ -102,9 +106,9 @@ L'app est installable sur iOS et Android : manifest, icône « J » doré sur es
 
 | Niveau | Volume | Ce qui est couvert |
 | --- | --- | --- |
-| **pgTAP** (`pnpm db:test`) | **210 assertions**, 9 fichiers | Isolation entre boutiques sur toutes les tables ; règles des rôles (gérant sans `lots`, `sale_item_allocations` ni `supplier_payments`, et `FORBIDDEN` sur les soldes) ; le gérant ne lit que ses ventes ; **l'exemple FIFO de DATA_MODEL §6** (affectations, coûts 61 000 F, marge 35 000 F, solde, annulation qui ramène A et B à 10) ; stock insuffisant ; paiements ≠ total ; retour limité aux lots du fournisseur ; annulation de réception refusée après une vente ; écritures directes refusées ; catalogue public sans coût et sans prix si demandé ; soldes et avance ; tableau de bord du propriétaire et du gérant ; règles du Storage. |
-| **Vitest** (`pnpm test`) | **61 tests**, 11 fichiers | `formatMoney` et dates, montants saisis, téléphones E.164, slugs, permissions, erreurs, estimation FIFO, périodes, pluriels, schémas. |
-| **Playwright** (`pnpm test:e2e`) | **34 tests**, sur mobile et ordinateur | Inscription → boutique → membres (création et rattachement) ; droits du gérant ; 404 pour un non-membre ; fournisseurs, modèles avec photo, clients ; réceptions et annulation ; **parcours de vente complet** (vente rapide, revendeur, client créé à la volée, paiement divisé, reçu PNG, annulation) ; compte fournisseur, retour, dépenses ; tableau de bord et export CSV ; catalogue public, aperçus, prix masqués, logo ; installation PWA et vente qui survit à une coupure. |
+| **pgTAP** (`pnpm db:test`) | **213 assertions**, 10 fichiers | Isolation entre boutiques sur toutes les tables ; règles des rôles (gérant sans `lots`, `sale_item_allocations` ni `supplier_payments`, et `FORBIDDEN` sur les soldes) ; le gérant ne lit que ses ventes ; **l'exemple FIFO de DATA_MODEL §6** (affectations, coûts 61 000 F, marge 35 000 F, solde, annulation qui ramène A et B à 10) ; stock insuffisant ; paiements ≠ total ; retour limité aux lots du fournisseur ; annulation de réception refusée après une vente ; écritures directes refusées ; catalogue public sans coût et sans prix si demandé ; soldes et avance ; tableau de bord du propriétaire et du gérant ; règles du Storage ; garde-fous des advisors (chaque clé étrangère indexée, jamais deux politiques permissives pour la même action, lecture des profils inchangée). |
+| **Vitest** (`pnpm test`) | **63 tests**, 12 fichiers | `formatMoney` et dates, montants saisis, téléphones E.164, slugs, permissions, erreurs, estimation FIFO, périodes, pluriels, schémas (dont profil et changement de mot de passe). |
+| **Playwright** (`pnpm test:e2e`) | **36 tests**, sur mobile et ordinateur | Inscription → boutique → membres (création et rattachement) ; droits du gérant ; 404 pour un non-membre ; fournisseurs, modèles avec photo, clients ; réceptions et annulation ; **parcours de vente complet** (vente rapide, revendeur, client créé à la volée, paiement divisé, reçu PNG, annulation) ; compte fournisseur, retour, dépenses ; tableau de bord et export CSV ; catalogue public, aperçus, prix masqués, logo ; installation PWA et vente qui survit à une coupure ; profil et changement de mot de passe (ancien mot de passe faux refusé, reconnexion avec le nouveau) ; réinitialisation du mot de passe d'un gérant, refusée pour un compte partagé avec une autre boutique. |
 | **À la demande** | Captures et performance | `screens` : 153 captures (25 écrans × 3 largeurs × 2 thèmes, plus le menu « Plus » et le reçu), avec contrôle de l'absence de défilement horizontal. `perf` : premier affichage sur build de production (voir ci-dessous). |
 
 Comment ces tests sont exécutés :
@@ -157,15 +161,20 @@ Le détail, avec la raison de chaque choix, est dans [`DECISIONS.md`](DECISIONS.
 - **Serwist remplacé** par un service worker écrit à la main : Serwist sous Turbopack demandait des dépendances hors stack.
 - `pnpm db:test` sans Docker, et `pnpm db:seed` par script plutôt que `seed.sql`.
 
+**Phase 9 (avant ouverture)**
+- Changement de mot de passe : l'ancien est vérifié sur un client isolé, sans toucher à la session.
+- Réinitialisation par owner/admin limitée aux comptes qui ne dépendent que de boutiques qu'il gère (sinon, prise de contrôle possible d'un compte partagé) ; les sessions déjà ouvertes du membre ne sont pas coupées.
+- Advisors : les 24 avertissements restants (« fonction `SECURITY DEFINER` exécutable ») sont voulus, c'est l'architecture RPC ; les « index inutilisés » sont normaux sur une base de dev.
+- Sauvegardes chiffrées, car le dépôt GitHub est public.
+
 ---
 
 ## 5. Ce qui reste à faire, limites connues
 
 **À faire avant ou juste après l'ouverture**
 1. **Mise en production** (section 6), non exécutée.
-2. **Mot de passe oublié** : aucun parcours de réinitialisation, puisque l'app n'envoie pas d'e-mail. Aujourd'hui, la propriétaire ne peut que retirer puis recréer un membre. Il faudra soit activer un SMTP avec le parcours Supabase, soit ajouter une réinitialisation par la propriétaire, via une Server Action avec la clé secrète.
-3. **Profil utilisateur** : il n'y a pas d'écran pour changer son nom, son téléphone ou son mot de passe. Un membre garde son mot de passe provisoire.
-4. **Sauvegardes quotidiennes** (SPEC §6) : elles dépendent du plan Supabase (plan Pro pour les sauvegardes quotidiennes).
+2. **Mot de passe oublié de la propriétaire** : un membre est dépanné par sa propriétaire (réinitialisation), mais la propriétaire elle-même n'a pas de parcours, puisque l'app n'envoie pas d'e-mail. En attendant un SMTP, le mot de passe se change depuis le tableau Supabase (Authentication → Users).
+3. **Sauvegardes** : le workflow hebdomadaire chiffré est prêt mais **désactivé** tant que les secrets GitHub ne sont pas posés (README, « Sauvegardes »). Les sauvegardes quotidiennes de SPEC §6 demandent le plan Pro de Supabase ; le workflow les complète (copie hors de Supabase, 30 jours).
 
 **Hors périmètre ou non implémenté**
 - **Super-admin plateforme** (SPEC §3) : la colonne `is_platform_admin` existe, mais il n'y a ni écran ni fonction.
@@ -204,7 +213,7 @@ Le détail, avec la raison de chaque choix, est dans [`DECISIONS.md`](DECISIONS.
 5. **Migrations** : appliquer les migrations depuis une copie propre du dépôt :
    ```bash
    pnpm supabase link --project-ref <ref-prod>    # avec le jeton et le mot de passe de prod dans l'environnement
-   pnpm db:push                                     # applique les 12 migrations (tables, RLS, RPC, buckets)
+   pnpm db:push                                     # applique les 15 migrations (tables, RLS, RPC, buckets)
    pnpm supabase link --project-ref bixrtirfupirfbljsszu   # revenir immédiatement sur le projet de dev
    ```
    Ne **jamais** lancer `pnpm db:test` ni `pnpm db:seed` en production : les deux refusent de tourner hors du projet de dev.
@@ -239,3 +248,10 @@ Le détail, avec la raison de chaque choix, est dans [`DECISIONS.md`](DECISIONS.
 4. Coller le lien du catalogue dans WhatsApp et vérifier l'aperçu (image, titre).
 5. Installer l'app : sur iPhone, Safari puis Partager → « Sur l'écran d'accueil » ; sur Android, Chrome puis « Installer l'application ».
 6. Mesurer la performance réelle : `PERF=1 PERF_URL=https://<domaine> pnpm exec playwright test perf --project=mobile`. Ce test crée un compte `jaay-e2e-*` et une boutique `zz-perf` à supprimer ensuite depuis le tableau Supabase, ou à lancer plutôt sur un déploiement de prévisualisation relié au projet de dev.
+
+### 6.4 Sauvegardes
+
+1. Dans le dépôt GitHub, poser les secrets `SUPABASE_DB_URL` (URI **Session pooler** du projet de **production**) et `BACKUP_PASSPHRASE`, puis la variable `BACKUP_ENABLED = true` (procédure détaillée dans le README, « Sauvegardes »).
+2. Lancer le workflow « Database backup » à la main une première fois et vérifier l'artefact.
+3. Faire un essai de restauration sur un projet Supabase jetable.
+4. Recommandé : passer le dépôt GitHub en privé.

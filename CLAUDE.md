@@ -199,6 +199,7 @@ Travaille **phase par phase**, dans l'ordre. Au début de chaque phase : propose
 - [x] **Phase 6 — Tableau de bord et rapports** : RPC `get_dashboard` (sans coûts pour `manager`) ; tableau de bord mobile et ordinateur ; rapports par période ; export CSV.
 - [x] **Phase 7 — Catalogue public** : `/b/[slug]` rendu serveur, métadonnées Open Graph (aperçu WhatsApp soigné), prix affiché ou « prix sur demande » selon la boutique, bouton « Commander sur WhatsApp » avec message pré-rempli ; partage d'un modèle.
 - [x] **Phase 8 — Finitions** (déploiement en production non exécuté : procédure dans `docs/RAPPORT.md`) : PWA (manifest, icônes, écran de démarrage, installation iOS/Android), performance (premier affichage < 2 s en 4G), accessibilité, mode sombre vérifié, e2e Playwright du parcours vente, déploiement Vercel + Supabase Cloud, README.
+- [x] **Phase 9 — Avant ouverture** : écran « Mon profil » (nom, téléphone, mot de passe), réinitialisation du mot de passe d'un membre par owner/admin, sauvegarde hebdomadaire chiffrée (GitHub Actions, désactivée par défaut), corrections des advisors Supabase.
 
 ---
 
