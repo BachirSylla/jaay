@@ -31,6 +31,8 @@ export function toErrorCode(error: unknown): ErrorCode {
     case "email_exists":
     case "user_already_exists":
       return "EMAIL_TAKEN";
+    case "same_password":
+      return "SAME_PASSWORD";
     case "weak_password":
       return "WEAK_PASSWORD";
     case "email_not_confirmed":

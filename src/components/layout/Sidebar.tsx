@@ -85,16 +85,25 @@ export function Sidebar() {
       </nav>
 
       <div className="flex items-center gap-3 border-t border-sidebar-border pt-4 max-lg:flex-col">
-        <span
-          aria-hidden="true"
-          className="grid size-9 shrink-0 place-items-center rounded-full bg-espresso-ink/10 text-sm font-semibold"
-        >
-          {initials(user.fullName || user.email || "")}
-        </span>
-        <span className="flex min-w-0 flex-1 flex-col max-lg:hidden">
-          <span className="truncate text-sm font-semibold">{user.fullName}</span>
-          <span className="truncate text-xs text-espresso-muted">{user.email}</span>
-        </span>
+        <SidebarTooltip label={fr.profile.open}>
+          <Link
+            href={`/s/${shop.slug}/profil`}
+            aria-label={fr.profile.open}
+            aria-current={pathname === `/s/${shop.slug}/profil` ? "page" : undefined}
+            className="flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-xl outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-gold/60 max-lg:justify-center lg:-ml-1 lg:px-1"
+          >
+            <span
+              aria-hidden="true"
+              className="grid size-9 shrink-0 place-items-center rounded-full bg-espresso-ink/10 text-sm font-semibold"
+            >
+              {initials(user.fullName || user.email || "")}
+            </span>
+            <span className="flex min-w-0 flex-1 flex-col max-lg:hidden">
+              <span className="truncate text-sm font-semibold">{user.fullName}</span>
+              <span className="truncate text-xs text-espresso-muted">{user.email}</span>
+            </span>
+          </Link>
+        </SidebarTooltip>
         <form action={signOut}>
           <SidebarTooltip label={fr.auth.signOut} always>
             <button

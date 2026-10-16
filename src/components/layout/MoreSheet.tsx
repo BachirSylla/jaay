@@ -12,6 +12,7 @@ import {
 import { signOut } from "@/features/auth/actions";
 import { ShopList } from "@/features/shop/components/ShopSwitcher";
 import { useShop } from "@/features/shop/shop-context";
+import { initials } from "@/lib/initials";
 import { fr } from "@/messages/fr";
 import { navHref, visibleNavItems } from "./nav";
 import { ThemeToggle } from "./ThemeToggle";
@@ -74,10 +75,23 @@ export function MoreSheet({
           </section>
 
           <div className="flex items-center gap-3 border-t border-line pt-4">
-            <span className="flex min-w-0 flex-1 flex-col">
-              <span className="truncate font-semibold">{user.fullName}</span>
-              <span className="truncate text-sm text-muted-foreground">{user.email}</span>
-            </span>
+            <Link
+              href={`/s/${shop.slug}/profil`}
+              onClick={close}
+              aria-label={fr.profile.open}
+              className="flex min-h-12 min-w-0 flex-1 items-center gap-3 rounded-xl hover:bg-surface-muted"
+            >
+              <span
+                aria-hidden="true"
+                className="grid size-10 shrink-0 place-items-center rounded-full bg-cognac-tint text-sm font-semibold text-cognac"
+              >
+                {initials(user.fullName || user.email || "")}
+              </span>
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span className="truncate font-semibold">{user.fullName}</span>
+                <span className="truncate text-sm text-muted-foreground">{fr.profile.open}</span>
+              </span>
+            </Link>
             <form action={signOut}>
               <button
                 type="submit"
