@@ -20,6 +20,7 @@ import { fr } from "@/messages/fr";
 import { removeMember, updateMemberRole } from "../actions";
 import { useShop } from "../shop-context";
 import type { Member } from "../types";
+import { ResetPasswordDialog } from "./ResetPasswordDialog";
 
 const t = fr.members;
 
@@ -89,6 +90,7 @@ function MemberRow({ member }: { member: Member }) {
                 ))}
               </SelectContent>
             </Select>
+            <ResetPasswordDialog userId={member.userId} name={member.fullName} />
             <ConfirmDialog
               trigger={
                 <Button

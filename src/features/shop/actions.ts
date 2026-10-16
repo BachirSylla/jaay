@@ -8,9 +8,11 @@ import { refreshPublicCatalog } from "@/features/catalog/cache";
 import { SHOP_LOGOS_BUCKET } from "@/lib/storage";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { isUuid } from "@/lib/uuid";
 import {
   addMemberSchema,
   createShopSchema,
+  generatePassword,
   memberRoleSchema,
   shopSettingsSchema,
   type AddMemberValues,
@@ -217,4 +219,47 @@ export async function setShopLogo(shopId: string, logoPath: string | null): Prom
   await refreshPublicCatalog(shopId);
   refresh();
   return { ok: true, data: undefined };
+}
+
+/**
+ * Gives a member a new temporary password (secret key, server only). Allowed to owner/admin
+ * of the shop, never on an owner or on oneself, and only when every shop of that account is
+ * managed by the caller: otherwise the reset would take over an account used elsewhere.
+ */
+export async function resetMemberPassword(
+  shopId: string,
+  userId: string,
+): Promise<ActionResult<{ password: string }>> {
+  if (!isUuid(shopId) || !isUuid(userId)) return { ok: false, error: "VALIDATION" };
+
+  const { supabase, allowed } = await assertCanManageMembers(shopId);
+  if (!allowed) return { ok: false, error: "FORBIDDEN" };
+  const { data: claims } = await supabase.auth.getClaims();
+  const callerId = claims?.claims?.sub;
+  if (!callerId || callerId === userId) return { ok: false, error: "FORBIDDEN" };
+
+  const admin = createAdminClient();
+  const [{ data: targetShops, error: targetError }, { data: managedShops, error: callerError }] =
+    await Promise.all([
+      admin.from("shop_members").select("shop_id, role").eq("user_id", userId),
+      admin
+        .from("shop_members")
+        .select("shop_id")
+        .eq("user_id", callerId)
+        .in("role", ["owner", "admin"]),
+    ]);
+  if (targetError || callerError) return { ok: false, error: "UNKNOWN" };
+
+  const inThisShop = targetShops?.find((m) => m.shop_id === shopId);
+  if (!inThisShop) return { ok: false, error: "NOT_FOUND" };
+  if (inThisShop.role === "owner") return { ok: false, error: "FORBIDDEN" };
+  const managed = new Set((managedShops ?? []).map((m) => m.shop_id));
+  if (targetShops!.some((m) => m.role === "owner" || !managed.has(m.shop_id))) {
+    return { ok: false, error: "RESET_NOT_ALLOWED" };
+  }
+
+  const password = generatePassword(12);
+  const { error } = await admin.auth.admin.updateUserById(userId, { password });
+  if (error) return { ok: false, error: toErrorCode(error) };
+  return { ok: true, data: { password } };
 }
