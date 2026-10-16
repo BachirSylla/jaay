@@ -6,5 +6,6 @@ export async function signIn(page: Page, email: string, password = E2E_PASSWORD)
   await page.getByLabel("E-mail").fill(email);
   await page.getByLabel("Mot de passe", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Se connecter" }).click();
-  await expect(page).not.toHaveURL(/\/connexion/);
+  // The first sign-in also compiles routes on the dev server: allow some time.
+  await expect(page).not.toHaveURL(/\/connexion/, { timeout: 15_000 });
 }
