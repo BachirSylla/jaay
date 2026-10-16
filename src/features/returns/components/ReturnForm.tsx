@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { type ComponentProps, useState, useTransition } from "react";
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -25,6 +25,7 @@ import type { Supplier } from "@/features/suppliers/types";
 import { errorMessage } from "@/lib/errors";
 import { formatQty, toDateInputValue } from "@/lib/format";
 import { fill } from "@/lib/i18n";
+import { useFreshFormKey } from "@/lib/use-fresh-form-key";
 import { fr } from "@/messages/fr";
 import { createReturn } from "../actions";
 import { returnSchema, type ReturnInput, type ReturnValues } from "../schemas";
@@ -40,12 +41,15 @@ function linesFor(supplierId: string, stock: SupplierStock) {
 }
 
 /** Return of unsold bags: quantities pre-filled with what is left from the supplier. */
-export function ReturnForm({
+function ReturnFormBody({
+  onSubmitted,
   suppliers,
   products,
   stock,
   initialSupplierId,
 }: {
+  /** Called after a successful submit: the form is rebuilt empty for the next visit. */
+  onSubmitted: () => void;
   suppliers: Supplier[];
   products: Product[];
   stock: SupplierStock;
@@ -85,6 +89,7 @@ export function ReturnForm({
     startTransition(async () => {
       const result = await createReturn(shop.id, values);
       if (!result.ok) return setFormError(errorMessage(result.error));
+      onSubmitted();
       toast.success(t.created);
       router.push(`/s/${shop.slug}/retours/${result.data.id}`);
     });
@@ -227,4 +232,9 @@ export function ReturnForm({
       </div>
     </form>
   );
+}
+
+export function ReturnForm(props: Omit<ComponentProps<typeof ReturnFormBody>, "onSubmitted">) {
+  const { key, markSubmitted } = useFreshFormKey();
+  return <ReturnFormBody key={key} {...props} onSubmitted={markSubmitted} />;
 }

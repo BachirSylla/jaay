@@ -47,6 +47,16 @@ test("owner sells two bags in a few taps", async ({ page }) => {
   await expect(page.getByRole("status")).toContainText("Vente n° 1 enregistrée.");
   await expect(page).toHaveURL(new RegExp(`/s/${slug}$`));
 
+  // Back to the form without reloading (the screen stayed mounted, hidden): it opens empty,
+  // with the next number and without the success overlay.
+  await page.getByRole("link", { name: "Nouvelle vente" }).filter({ visible: true }).first().click();
+  await expect(page).toHaveURL(new RegExp(`/s/${slug}/ventes/nouvelle$`));
+  await expect(page.getByText("n° 2").filter({ visible: true })).toBeVisible();
+  await expect(
+    page.locator("p", { hasText: "Vente n° 1 enregistrée." }).filter({ visible: true }),
+  ).toHaveCount(0);
+  await expect(page.getByLabel(/Prix de vente — Cabas/).filter({ visible: true })).toHaveCount(0);
+
   await page.goto(`/s/${slug}/ventes`);
   const sale = page.getByRole("link", { name: /n° 1/ });
   await expect(sale).toContainText("16 000 F");

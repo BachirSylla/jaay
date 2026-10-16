@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { type ComponentProps, useState, useTransition } from "react";
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, X } from "lucide-react";
@@ -27,17 +27,21 @@ import { useShop } from "@/features/shop/shop-context";
 import type { Supplier } from "@/features/suppliers/types";
 import { errorMessage } from "@/lib/errors";
 import { formatQty, toDateInputValue } from "@/lib/format";
+import { useFreshFormKey } from "@/lib/use-fresh-form-key";
 import { fr } from "@/messages/fr";
 import { createReception } from "../actions";
 import { receptionSchema, type ReceptionInput, type ReceptionValues } from "../schemas";
 
 const t = fr.receptions;
 
-export function ReceptionForm({
+function ReceptionFormBody({
+  onSubmitted,
   suppliers,
   products,
   latestCosts,
 }: {
+  /** Called after a successful submit: the form is rebuilt empty for the next visit. */
+  onSubmitted: () => void;
   suppliers: Supplier[];
   products: Product[];
   /** Last supplier price per product: owner/admin only, empty for managers. */
@@ -75,6 +79,7 @@ export function ReceptionForm({
     startTransition(async () => {
       const result = await createReception(shop.id, values);
       if (!result.ok) return setFormError(errorMessage(result.error));
+      onSubmitted();
       toast.success(t.created);
       router.push(`/s/${shop.slug}/receptions/${result.data.id}`);
     });
@@ -271,4 +276,11 @@ export function ReceptionForm({
       </div>
     </form>
   );
+}
+
+export function ReceptionForm(
+  props: Omit<ComponentProps<typeof ReceptionFormBody>, "onSubmitted">,
+) {
+  const { key, markSubmitted } = useFreshFormKey();
+  return <ReceptionFormBody key={key} {...props} onSubmitted={markSubmitted} />;
 }

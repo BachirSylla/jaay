@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { type ComponentProps, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion } from "motion/react";
@@ -27,6 +27,7 @@ import { errorMessage } from "@/lib/errors";
 import { fifoCost, type FifoLot } from "@/lib/fifo";
 import { formatMoney, formatQty, toDateInputValue } from "@/lib/format";
 import { fill } from "@/lib/i18n";
+import { useFreshFormKey } from "@/lib/use-fresh-form-key";
 import { fr } from "@/messages/fr";
 import { createSale } from "../actions";
 import { SALE_CHANNELS, saleSchema, saleTotal, type SaleInput, type SaleValues } from "../schemas";
@@ -81,7 +82,8 @@ function priceFor(product: Product | undefined, type: CustomerType): number | nu
  * Quick sale (mockup 2): customer type, customer, lines with free price, channel, payment,
  * fixed footer with the total and "Encaisser". Designed to take less than 20 seconds.
  */
-export function NewSaleForm({
+function NewSaleFormBody({
+  onSubmitted,
   nextNumber,
   products,
   stock,
@@ -89,6 +91,8 @@ export function NewSaleForm({
   fifoLots,
   showMargin,
 }: {
+  /** Called after a successful submit: the form is rebuilt empty for the next visit. */
+  onSubmitted: () => void;
   nextNumber: number;
   products: Product[];
   stock: Record<string, ProductStock>;
@@ -206,6 +210,7 @@ export function NewSaleForm({
           return;
         }
         clearDraft(draftKey);
+        onSubmitted();
         setSuccess(result.data.number);
         toast.success(fill(t.created, { n: result.data.number }), {
           action: {
@@ -489,4 +494,9 @@ export function NewSaleForm({
       </AnimatePresence>
     </form>
   );
+}
+
+export function NewSaleForm(props: Omit<ComponentProps<typeof NewSaleFormBody>, "onSubmitted">) {
+  const { key, markSubmitted } = useFreshFormKey();
+  return <NewSaleFormBody key={key} {...props} onSubmitted={markSubmitted} />;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { type ComponentProps, useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -22,6 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useShop } from "@/features/shop/shop-context";
 import { BAG_COLORS } from "@/lib/bag-colors";
 import { errorMessage } from "@/lib/errors";
+import { useFreshFormKey } from "@/lib/use-fresh-form-key";
 import { fr } from "@/messages/fr";
 import { createProduct, updateProduct } from "../actions";
 import { productSchema, type ProductInput, type ProductValues } from "../schemas";
@@ -43,10 +44,13 @@ function defaults(product?: Product): ProductInput {
   };
 }
 
-export function ProductForm({
+function ProductFormBody({
+  onSubmitted,
   categories,
   product,
 }: {
+  /** Called after a successful submit: the form is rebuilt empty for the next visit. */
+  onSubmitted: () => void;
   categories: Category[];
   product?: Product;
 }) {
@@ -71,6 +75,7 @@ export function ProductForm({
       } else {
         const result = await createProduct(shop.id, values);
         if (!result.ok) return setFormError(errorMessage(result.error));
+        onSubmitted();
         toast.success(t.created);
         // Next step: add photos on the product page.
         router.replace(`/s/${shop.slug}/modeles/${result.data.id}`);
@@ -231,4 +236,9 @@ export function ProductForm({
       </Button>
     </form>
   );
+}
+
+export function ProductForm(props: Omit<ComponentProps<typeof ProductFormBody>, "onSubmitted">) {
+  const { key, markSubmitted } = useFreshFormKey();
+  return <ProductFormBody key={key} {...props} onSubmitted={markSubmitted} />;
 }
