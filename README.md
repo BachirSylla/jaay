@@ -65,6 +65,35 @@ PERF=1 PERF_URL=http://localhost:3100 pnpm exec playwright test perf --project=m
 
 **Ne jamais lancer `pnpm db:test` ni `pnpm db:seed` sur le projet de production.** Les deux scripts vérifient le projet lié et refusent de tourner ailleurs que sur le projet de dev.
 
+## Sauvegardes
+
+Le workflow [`.github/workflows/backup.yml`](.github/workflows/backup.yml) fait chaque dimanche à 2 h (heure de Dakar) un `pg_dump` de la base (schémas `public`, `auth` et `storage`), le **chiffre** (AES-256) et le garde **30 jours** en artefact GitHub. Il est **désactivé** tant que les réglages ci-dessous ne sont pas faits. Les fichiers des photos et logos restent dans Supabase Storage et ne sont pas dans la sauvegarde.
+
+Le chiffrement est obligatoire : le dépôt est public, et les artefacts d'un dépôt public peuvent être téléchargés par n'importe quel compte GitHub. Passer le dépôt en privé reste recommandé (Settings → General → Danger Zone → Change visibility).
+
+**Activer** (GitHub → dépôt → Settings → Secrets and variables → Actions) :
+
+1. Onglet **Secrets**, « New repository secret » :
+   - `SUPABASE_DB_URL` : Supabase → bouton **Connect** → **Session pooler** → l'URI `postgresql://postgres.<ref>:[YOUR-PASSWORD]@aws-…pooler.supabase.com:5432/postgres`, avec le mot de passe de la base à la place de `[YOUR-PASSWORD]`.
+   - `BACKUP_PASSPHRASE` : une longue phrase de passe aléatoire (32 caractères ou plus). **La garder dans un gestionnaire de mots de passe** : sans elle, les sauvegardes sont illisibles.
+2. Onglet **Variables**, « New repository variable » : `BACKUP_ENABLED` = `true`.
+3. Onglet **Actions** → « Database backup » → **Run workflow** pour un premier essai, puis vérifier que l'artefact `jaay-backup-<date>` apparaît en bas du résumé.
+
+Pour suspendre les sauvegardes : passer `BACKUP_ENABLED` à `false`.
+
+**Restaurer** (sur un poste avec le client PostgreSQL 17 et `gpg`, fourni avec Git pour Windows) dans un projet Supabase **vide** dont les migrations ont été appliquées (`pnpm db:push`) :
+
+```bash
+gpg --decrypt jaay-2026-10-18.dump.gpg > jaay.dump      # demande la phrase de passe
+pg_restore --data-only --no-owner -n auth -t users -t identities -f auth.sql jaay.dump
+pg_restore --data-only --no-owner -n public -f public.sql jaay.dump
+pg_restore --data-only --no-owner -n storage -t objects -f storage.sql jaay.dump
+psql "<SUPABASE_DB_URL du projet cible>" --single-transaction -v ON_ERROR_STOP=1 \
+  -c "set session_replication_role = replica" -f auth.sql -f public.sql -f storage.sql
+```
+
+`session_replication_role = replica` coupe les triggers pendant la restauration (le profil est restauré tel quel au lieu d'être recréé). Les photos sont à recopier séparément depuis l'ancien Storage. Faire un essai de restauration sur un projet jetable une fois les sauvegardes activées.
+
 ## Organisation du code
 
 ```
