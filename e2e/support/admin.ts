@@ -59,6 +59,11 @@ export async function deleteE2EData() {
         const paths = (files ?? []).map((file) => `${shopId}/${folder.name}/${file.name}`);
         if (paths.length) await bucket.remove(paths);
       }
+      // Logos live in shop-logos under <shop_id>/.
+      const logos = admin.storage.from("shop-logos");
+      const { data: logoFiles } = await logos.list(shopId);
+      const logoPaths = (logoFiles ?? []).map((file) => `${shopId}/${file.name}`);
+      if (logoPaths.length) await logos.remove(logoPaths);
     }
     await admin.from("shops").delete().in("id", shopIds);
   }
