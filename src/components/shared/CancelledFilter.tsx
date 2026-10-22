@@ -38,24 +38,33 @@ export function CancelledToggle({
   );
 }
 
+export type ListRow = { key: string; cancelled: boolean; className?: string; node: ReactNode };
+
 /**
- * Wraps a server-rendered list: rows marked `data-cancelled` are hidden until the user asks
- * for them (rule in globals.css). Cancelled operations are never deleted, only kept out of sight.
+ * A list whose rows are rendered on the server: cancelled rows stay out of sight until the
+ * user asks for them. Cancelled operations are never deleted, only hidden from the list.
  */
-export function HideCancelled({
-  count,
-  total,
-  children,
-}: {
-  count: number;
-  total: number;
-  children: ReactNode;
-}) {
+export function HideCancelled({ rows, className }: { rows: ListRow[]; className: string }) {
   const [shown, setShown] = useState(false);
+  const listed = shown ? rows : rows.filter((row) => !row.cancelled);
   return (
-    <div className="flex flex-col gap-2" data-show-cancelled={shown}>
-      <CancelledToggle count={count} shown={shown} onShownChange={setShown} />
-      {!shown && count > 0 && count === total ? <AllHidden /> : children}
+    <div className="flex flex-col gap-2">
+      <CancelledToggle
+        count={rows.length - rows.filter((row) => !row.cancelled).length}
+        shown={shown}
+        onShownChange={setShown}
+      />
+      {listed.length === 0 ? (
+        <AllHidden />
+      ) : (
+        <ul className={className}>
+          {listed.map((row) => (
+            <li key={row.key} className={row.className}>
+              {row.node}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
