@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Jaay — Guide d'essai</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap">
+<style>
+/* Printable A4 guide. Jaay identity: stone ground, espresso cards, cognac actions, emerald money. */
+:root {
+  --ground: #F2F2EF; --surface: #FFFFFF; --surface-muted: #E7E4DF;
+  --ink: #191714; --muted: #6B655E; --line: #E3E0DA;
+  --espresso: #211A15; --espresso-ink: #F7F1EA; --espresso-muted: #CDBFB0; --gold: #F2C894;
+  --cognac: #A85A24; --cognac-tint: #F6E9DD; --emerald: #17694F; --emerald-soft: #E5F2EC; --mint: #9FD8C2;
+  --danger: #9A3B12; --danger-soft: #FBE3D6;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "DM Sans", "Segoe UI", system-ui, sans-serif;
+}
+@page { size: A4; margin: 16mm 15mm 18mm; }
+@page :first { margin: 0; }
+* { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+html, body { margin: 0; background: var(--surface); color: var(--ink); font-family: var(--body); font-size: 10.5pt; line-height: 1.5; }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+b { font-weight: 600; }
+.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+code { font-family: ui-monospace, Consolas, monospace; font-size: 0.9em; background: var(--surface-muted); padding: 0 4px; border-radius: 4px; }
+
+/* Cover */
+.cover { height: 297mm; background: var(--espresso); color: var(--espresso-ink); padding: 28mm 22mm; display: flex; flex-direction: column; justify-content: space-between; page-break-after: always; }
+.mark { width: 22mm; height: 22mm; border-radius: 6mm; background: #2E241D; color: var(--gold); font-family: var(--display); font-weight: 700; font-size: 15mm; display: grid; place-items: center; }
+.cover h1 { font-size: 44pt; letter-spacing: -1.5px; line-height: 1.05; margin-top: 14mm; }
+.cover h1 span { color: var(--gold); }
+.cover .lead { font-size: 14pt; color: var(--espresso-muted); max-width: 120mm; margin-top: 8mm; line-height: 1.45; }
+.cover .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6mm; border-top: 1px solid rgb(255 255 255 / 0.15); padding-top: 8mm; }
+.cover .facts div { display: grid; gap: 1mm; }
+.cover .facts span { font-size: 9pt; color: var(--espresso-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.cover .facts strong { font-family: var(--display); font-size: 15pt; color: var(--espresso-ink); }
+.cover .url { font-family: var(--display); font-size: 16pt; color: var(--gold); }
+
+/* Content */
+.section { page-break-before: always; display: grid; gap: 5mm; }
+.section.flow { page-break-before: auto; margin-top: 9mm; }
+.eyebrow { font-size: 8.5pt; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cognac); }
+h2 { font-size: 21pt; letter-spacing: -0.5px; }
+h3 { font-size: 12.5pt; }
+.intro { color: var(--muted); max-width: 165mm; }
+ul.plain { margin: 0; padding-left: 5mm; display: grid; gap: 1.5mm; }
+
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+.box { border: 1px solid var(--line); border-radius: 4mm; padding: 4mm 5mm; display: grid; gap: 2mm; break-inside: avoid; }
+.box.tint { background: var(--cognac-tint); border-color: transparent; }
+
+table { width: 100%; border-collapse: collapse; font-size: 9.5pt; break-inside: avoid; }
+th, td { text-align: left; padding: 2mm 3mm; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 8pt; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); background: var(--surface-muted); font-weight: 600; }
+td.r, th.r { text-align: right; }
+.yes { color: var(--emerald); font-weight: 600; }
+.no { color: var(--danger); font-weight: 600; }
+
+/* Steps */
+.step { display: grid; grid-template-columns: 11mm 1fr; gap: 0 4mm; break-inside: avoid; padding: 3.5mm 0; border-top: 1px solid var(--line); }
+.step:first-of-type { border-top: 0; }
+.step .n { font-family: var(--display); font-weight: 700; font-size: 15pt; color: var(--cognac); line-height: 1.2; }
+.step h3 { margin-bottom: 1.5mm; }
+.step ol { margin: 0; padding-left: 5mm; display: grid; gap: 1.2mm; }
+.check { display: inline-block; width: 3.4mm; height: 3.4mm; border: 1.2px solid var(--muted); border-radius: 1mm; vertical-align: -0.5mm; margin-right: 2mm; }
+.expect { margin-top: 2mm; background: var(--emerald-soft); border-radius: 3mm; padding: 2.5mm 3.5mm; font-size: 9.8pt; }
+.expect::before { content: "Vous devez voir"; display: block; font-size: 7.5pt; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--emerald); margin-bottom: 0.5mm; }
+.why { margin-top: 2mm; border-left: 2px solid var(--cognac); padding-left: 3.5mm; font-size: 9.8pt; color: var(--muted); }
+.why b { color: var(--ink); }
+
+/* Data card */
+.data td:first-child { width: 40mm; color: var(--muted); }
+
+/* Results */
+.results { background: var(--espresso); color: var(--espresso-ink); border-radius: 5mm; padding: 6mm 7mm; display: grid; gap: 4mm; break-inside: avoid; }
+.results h3 { color: var(--espresso-ink); }
+.kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm 6mm; }
+.kpi span { display: block; font-size: 8.5pt; color: var(--espresso-muted); }
+.kpi strong { font-family: var(--display); font-size: 19pt; letter-spacing: -0.5px; font-variant-numeric: tabular-nums; }
+.kpi strong small { font-size: 0.55em; color: var(--gold); margin-left: 1mm; }
+.kpi strong.pos { color: var(--mint); }
+.results p { font-size: 9.5pt; color: var(--espresso-muted); }
+
+.faq { display: grid; gap: 3.5mm; }
+.faq div { break-inside: avoid; }
+.faq h3 { font-size: 11pt; margin-bottom: 1mm; }
+.faq p { color: var(--muted); }
+.end { margin-top: 14mm; text-align: center; color: var(--muted); font-size: 9pt; }
+.end strong { font-family: var(--display); color: var(--cognac); font-size: 13pt; display: block; margin-bottom: 1mm; }
+</style>
+</head>
+<body>
+
+<section class="cover">
+  <div>
+    <div class="mark">J</div>
+    <h1>Essayez Jaay<br><span>en 45 minutes.</span></h1>
+    <p class="lead">Le guide pas à pas pour découvrir l'app de gestion du dépôt-vente de sacs : stock confié, ventes au prix négocié, dû au fournisseur et bénéfice net, depuis votre téléphone.</p>
+  </div>
+  <div style="display:grid; gap:10mm;">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:6mm;">
+      <div>
+        <div style="font-size:9pt; color:var(--espresso-muted); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:2mm;">Adresse de l'app</div>
+        <div class="url">jaay-three.vercel.app</div>
+      </div>
+      <div>
+        <div style="font-size:9pt; color:var(--espresso-muted); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:2mm;">Une question ?</div>
+        <div style="font-size:11pt; line-height:1.6;">WhatsApp <b style="color:var(--gold);">+221 77 380 72 83</b><br>bachirsylla889@gmail.com</div>
+      </div>
+    </div>
+    <div class="facts">
+      <div><span>Durée</span><strong>45 minutes</strong></div>
+      <div><span>Appareil</span><strong>Téléphone ou ordinateur</strong></div>
+      <div><span>Prix</span><strong>Essai gratuit</strong></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="page-break-before:auto;">
+  <span class="eyebrow">Avant de commencer</span>
+  <h2>Jaay en bref</h2>
+  <p class="intro">Jaay (« vendre » en wolof) est pensé pour les boutiques qui vendent des sacs en dépôt-vente. Le fournisseur vous confie ses sacs, vous les vendez au prix que vous négociez, vous lui reversez son prix pour chaque sac vendu et vous lui rendez les invendus.</p>
+  <div class="grid2">
+    <div class="box"><h3>Ce que Jaay calcule pour vous</h3>
+      <ul class="plain">
+        <li>Le stock de chaque modèle, en temps réel.</li>
+        <li>Ce que vous devez à chaque fournisseur, même si vous le payez petit à petit.</li>
+        <li>Votre marge sur chaque vente et votre bénéfice net, dépenses déduites.</li>
+      </ul></div>
+    <div class="box"><h3>Ce que vous pouvez partager</h3>
+      <ul class="plain">
+        <li>Un catalogue en ligne de vos sacs disponibles, à envoyer sur WhatsApp.</li>
+        <li>Un reçu pour chaque vente.</li>
+        <li>Un accès pour vos vendeuses, sans qu'elles voient vos prix d'achat ni vos marges.</li>
+      </ul></div>
+  </div>
+
+  <div class="box tint">
+    <h3>Pour faire l'essai, il vous faut</h3>
+    <ul class="plain">
+      <li>Un téléphone (iPhone ou Android) ou un ordinateur, connecté à internet.</li>
+      <li>Une adresse e-mail. Aucun code ni e-mail de confirmation : le compte marche tout de suite.</li>
+      <li>Une photo de sac dans votre téléphone (facultatif).</li>
+    </ul>
+    <p>Le guide utilise des données d'exemple. Suivez-les telles quelles : à chaque étape, il vous dit exactement quel chiffre doit apparaître. Ce que vous saisissez reste privé, visible seulement par vous et les personnes que vous invitez.</p>
+  </div>
+
+  <div>
+    <h3 style="margin-bottom:2mm;">Les données de l'exemple</h3>
+    <table class="data">
+      <tr><td>Fournisseur</td><td>Ibrahima Maroquinerie · 77 123 45 67</td></tr>
+      <tr><td>Modèle 1</td><td>Cabas cuir noir · prix conseillé <span class="num">8 000 F</span> · prix revendeur <span class="num">7 000 F</span></td></tr>
+      <tr><td>Modèle 2</td><td>Sac à dos caramel · prix conseillé <span class="num">12 000 F</span> · prix revendeur <span class="num">10 000 F</span></td></tr>
+      <tr><td>Dépôt d'hier</td><td>10 Cabas à <span class="num">5 000 F</span> pièce · livraison <span class="num">2 000 F</span></td></tr>
+      <tr><td>Dépôt d'aujourd'hui</td><td>10 Cabas à <span class="num">5 500 F</span> pièce · 3 Sacs à dos à <span class="num">9 000 F</span> pièce</td></tr>
+      <tr><td>Clientes</td><td>Awa Diop (particulier) · Fatou Revendeuse (revendeur)</td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="section">
+  <span class="eyebrow">Le parcours · 1 / 3</span>
+  <h2>Votre boutique et votre stock</h2>
+
+  <div class="step"><div class="n">1</div><div>
+    <h3>Créer votre compte et votre boutique</h3>
+    <ol>
+      <li><span class="check"></span>Ouvrez <b>jaay-three.vercel.app</b> et touchez « Créer mon compte ».</li>
+      <li><span class="check"></span>Indiquez votre nom, votre e-mail et un mot de passe (8 caractères minimum).</li>
+      <li><span class="check"></span>Donnez un nom à votre boutique (par exemple « Boutique d'essai ») et votre numéro WhatsApp, puis « Créer ma boutique ».</li>
+    </ol>
+    <p class="expect">Le tableau de bord « Bonjour, … » avec tous les chiffres à 0. Le lien de votre futur catalogue s'est affiché pendant que vous tapiez le nom.</p>
+  </div></div>
+
+  <div class="step"><div class="n">2</div><div>
+    <h3>Installer Jaay sur votre téléphone</h3>
+    <ol>
+      <li><span class="check"></span><b>iPhone</b> : dans Safari, touchez Partager, puis « Sur l'écran d'accueil ».</li>
+      <li><span class="check"></span><b>Android</b> : dans Chrome, ouvrez le menu, puis « Installer l'application ».</li>
+    </ol>
+    <p class="expect">Une icône « J » dorée sur votre écran d'accueil. Jaay s'ouvre en plein écran, comme une application, directement sur votre boutique.</p>
+  </div></div>
+
+  <div class="step"><div class="n">3</div><div>
+    <h3>Ajouter votre fournisseur</h3>
+    <ol>
+      <li><span class="check"></span>Menu « Plus » (ou barre de gauche sur ordinateur) → Fournisseurs → Nouveau fournisseur.</li>
+      <li><span class="check"></span>Nom <b>Ibrahima Maroquinerie</b>, téléphone 77 123 45 67.</li>
+    </ol>
+    <p class="expect">Sa fiche, avec « Rien à régler ».</p>
+  </div></div>
+
+  <div class="step"><div class="n">4</div><div>
+    <h3>Créer vos modèles de sacs</h3>
+    <ol>
+      <li><span class="check"></span>Stock → Nouveau modèle : <b>Cabas cuir noir</b>, couleur Noir, prix conseillé <span class="num">8 000</span>, prix revendeur <span class="num">7 000</span>. Ajoutez une photo si vous en avez une.</li>
+      <li><span class="check"></span>Nouveau modèle : <b>Sac à dos caramel</b>, couleur caramel, prix conseillé <span class="num">12 000</span>, prix revendeur <span class="num">10 000</span>.</li>
+    </ol>
+    <p class="expect">Deux cartes dans Stock, marquées « Épuisé » : vous n'avez encore rien reçu. Sans photo, la carte prend la couleur du sac.</p>
+    <p class="why">Les prix conseillés servent seulement à pré-remplir vos ventes : <b>le prix reste libre</b> à chaque vente.</p>
+  </div></div>
+
+  <div class="step"><div class="n">5</div><div>
+    <h3>Enregistrer les sacs que le fournisseur vous confie</h3>
+    <ol>
+      <li><span class="check"></span>Réceptions → Nouvelle réception. Fournisseur Ibrahima, date <b>d'hier</b>, Cabas cuir noir : 10 sacs à <span class="num">5 000</span>, frais de livraison <span class="num">2 000</span>.</li>
+      <li><span class="check"></span>Deuxième réception, date d'<b>aujourd'hui</b> : Cabas cuir noir 10 sacs à <span class="num">5 500</span>, Sac à dos caramel 3 sacs à <span class="num">9 000</span>.</li>
+    </ol>
+    <p class="expect">Dans Stock : 20 Cabas et 3 Sacs à dos. Dans Dépenses : la livraison de <span class="num">2 000 F</span>, ajoutée toute seule.</p>
+    <p class="why">Le fournisseur peut changer son prix d'un dépôt à l'autre : Jaay garde <b>le prix de chaque dépôt</b>. À la deuxième réception, il vous propose d'ailleurs le dernier prix connu.</p>
+  </div></div>
+</section>
+
+<section class="section">
+  <span class="eyebrow">Le parcours · 2 / 3</span>
+  <h2>Vendre et payer le fournisseur</h2>
+
+  <div class="step"><div class="n">6</div><div>
+    <h3>Votre première vente, en moins de 20 secondes</h3>
+    <ol>
+      <li><span class="check"></span>Touchez le bouton central « + Vente ». Choisissez « Particulier » et créez la cliente <b>Awa Diop</b> en tapant son nom.</li>
+      <li><span class="check"></span>Ajoutez le Cabas cuir noir et montez la quantité à <b>12</b>. Le prix de <span class="num">8 000</span> est déjà rempli.</li>
+      <li><span class="check"></span>Canal WhatsApp, paiement Wave, puis « Encaisser 96 000 F ».</li>
+    </ol>
+    <p class="expect">« Vente n° 1 enregistrée. », puis le tableau de bord. Avant d'encaisser, le bas de l'écran affichait une marge de <span class="num">35 000 F</span>.</p>
+    <p class="why"><b>Comment Jaay compte.</b> Les sacs les plus anciens partent en premier : 10 Cabas du dépôt d'hier à <span class="num">5 000 F</span> et 2 du dépôt d'aujourd'hui à <span class="num">5 500 F</span>. Vous devez donc <span class="num">61 000 F</span> au fournisseur pour cette vente, et votre marge est de <span class="num">96 000 − 61 000 = 35 000 F</span>.</p>
+  </div></div>
+
+  <div class="step"><div class="n">7</div><div>
+    <h3>Envoyer le reçu sur WhatsApp</h3>
+    <ol>
+      <li><span class="check"></span>Ventes → vente n° 1 → « Partager le reçu ».</li>
+    </ol>
+    <p class="expect">Sur téléphone, le menu de partage s'ouvre avec l'image du reçu, prête à envoyer à la cliente.</p>
+  </div></div>
+
+  <div class="step"><div class="n">8</div><div>
+    <h3>Une vente à une revendeuse, payée en deux fois</h3>
+    <ol>
+      <li><span class="check"></span>« + Vente », choisissez <b>Revendeur</b> et créez <b>Fatou Revendeuse</b>.</li>
+      <li><span class="check"></span>Ajoutez 1 Sac à dos caramel : le prix revendeur de <span class="num">10 000</span> est proposé.</li>
+      <li><span class="check"></span>Canal Instagram. « Diviser en deux » : Orange Money <span class="num">6 000</span> et Espèces <span class="num">4 000</span>. Encaissez.</li>
+    </ol>
+    <p class="expect">« Vente n° 2 enregistrée. » avec une marge de <span class="num">1 000 F</span> (<span class="num">10 000 − 9 000</span>).</p>
+    <p class="why">Si vous vendez un jour sous le prix du fournisseur, Jaay l'accepte mais affiche « Sous le prix fournisseur » en rouge avant que vous encaissiez.</p>
+  </div></div>
+
+  <div class="step"><div class="n">9</div><div>
+    <h3>Payer une partie au fournisseur</h3>
+    <ol>
+      <li><span class="check"></span>Fournisseurs → Ibrahima Maroquinerie.</li>
+      <li><span class="check"></span>« Régler » : <span class="num">50 000</span> par Wave.</li>
+    </ol>
+    <p class="expect">Avant : dû <span class="num">70 000 F</span> (<span class="num">61 000</span> + <span class="num">9 000</span>). Après le règlement : <span class="num">20 000 F</span>. Les compteurs indiquent 23 sacs confiés, 13 vendus, 10 en stock.</p>
+    <p class="why">Vous payez au fil des ventes ou en une fois : Jaay tient le compte. Si vous payez plus que ce qui est vendu, la différence apparaît comme une avance.</p>
+  </div></div>
+
+  <div class="step"><div class="n">10</div><div>
+    <h3>Rendre les invendus et noter une dépense</h3>
+    <ol>
+      <li><span class="check"></span>Sur la fiche du fournisseur : « Rendre les invendus ». Les quantités sont pré-remplies : mettez le Cabas à <b>0</b>, gardez les <b>2</b> Sacs à dos, livraison <span class="num">1 500</span>.</li>
+      <li><span class="check"></span>Dépenses → Nouvelle dépense : Emballage, <span class="num">3 000</span>.</li>
+    </ol>
+    <p class="expect">Le Sac à dos passe à « Épuisé » dans Stock. Les dépenses totalisent <span class="num">6 500 F</span> (<span class="num">2 000 + 1 500 + 3 000</span>).</p>
+  </div></div>
+</section>
+
+<section class="section">
+  <span class="eyebrow">Le parcours · 3 / 3</span>
+  <h2>Suivre, partager, déléguer</h2>
+
+  <div class="step"><div class="n">11</div><div>
+    <h3>Lire votre tableau de bord</h3>
+    <ol><li><span class="check"></span>Accueil, période « Mois ».</li></ol>
+  </div></div>
+
+  <div class="results">
+    <h3>Ce que votre tableau de bord affiche à ce stade</h3>
+    <div class="kpis">
+      <div class="kpi"><span>Bénéfice net</span><strong class="pos">29 500<small>F</small></strong></div>
+      <div class="kpi"><span>Chiffre d'affaires</span><strong>106 000<small>F</small></strong></div>
+      <div class="kpi"><span>Marge</span><strong class="pos">36 000<small>F</small></strong></div>
+      <div class="kpi"><span>Dépenses</span><strong>6 500<small>F</small></strong></div>
+      <div class="kpi"><span>Dû au fournisseur</span><strong>20 000<small>F</small></strong></div>
+      <div class="kpi"><span>Sacs vendus</span><strong>13</strong></div>
+    </div>
+    <p>Bénéfice net = marge (35 000 + 1 000) − dépenses (6 500). Plus bas : les encaissements par mode (Wave 96 000, Orange Money 6 000, Espèces 4 000) et le Sac à dos à surveiller, car il est épuisé. Sur ordinateur, « Rapports » donne les mêmes chiffres sur n'importe quelle période, avec un export vers Excel.</p>
+  </div>
+
+  <div class="step"><div class="n">12</div><div>
+    <h3>Partager votre catalogue sur WhatsApp</h3>
+    <ol>
+      <li><span class="check"></span>Stock → « Partager », et envoyez le lien à un proche (ou à vous-même) sur WhatsApp.</li>
+      <li><span class="check"></span>Ouvrez le lien et touchez « Commander » sur le Cabas.</li>
+    </ol>
+    <p class="expect">Un aperçu avec image dans WhatsApp. La page montre vos sacs en stock avec leur prix (le Sac à dos épuisé n'y est pas). « Commander » ouvre WhatsApp vers votre numéro avec un message déjà écrit : modèle, prix et lien.</p>
+    <p class="why">Vous préférez ne pas afficher les prix ? Paramètres → décochez « Afficher les prix dans le catalogue » : vos clients verront « Prix sur demande ».</p>
+  </div></div>
+
+  <div class="step"><div class="n">13</div><div>
+    <h3>Annuler une vente</h3>
+    <ol>
+      <li><span class="check"></span>Faites une vente de 1 Cabas à <span class="num">8 000</span> en espèces, ouvrez-la dans Ventes, puis « Annuler la vente » avec un motif.</li>
+    </ol>
+    <p class="expect">La vente est marquée « Annulée », le Cabas revient dans le stock et vos chiffres reviennent à ceux de l'étape 11.</p>
+    <p class="why">Dans Jaay, <b>rien ne s'efface</b> : une vente, une réception, un retour ou un règlement s'annule avec un motif et reste visible dans l'historique.</p>
+  </div></div>
+
+  <div class="step"><div class="n">14</div><div>
+    <h3>Donner un accès à une vendeuse</h3>
+    <ol>
+      <li><span class="check"></span>Paramètres → Membres → Ajouter un membre. Nom, e-mail, « Générer » un mot de passe, rôle <b>Gérant</b>.</li>
+      <li><span class="check"></span>Connectez-vous avec ce compte dans une fenêtre de navigation privée, ou sur un autre téléphone.</li>
+    </ol>
+    <p class="expect">Le gérant voit le stock, enregistre des ventes, des réceptions et des dépenses, mais ne voit ni vos prix fournisseur, ni vos marges, ni vos ventes à vous. Vous voyez sa vente, avec son nom.</p>
+  </div></div>
+
+  <div class="box tint" style="margin-top:10mm;">
+    <h3>Une question, un souci pendant l'essai ?</h3>
+    <p>Écrivez-nous sur WhatsApp au <b>+221 77 380 72 83</b> ou par e-mail à <b>bachirsylla889@gmail.com</b>. Dites-nous à quelle étape vous êtes : nous vous répondons rapidement.</p>
+  </div>
+
+  <div class="end"><strong>Jaay</strong>Votre dépôt-vente, enfin sous contrôle. · jaay-three.vercel.app</div>
+</section>
+
+<section class="section">
+  <span class="eyebrow">Bon à savoir</span>
+  <h2>Qui voit quoi</h2>
+  <table>
+    <thead><tr><th>Dans la boutique</th><th>Propriétaire</th><th>Administrateur</th><th>Gérant</th></tr></thead>
+    <tbody>
+      <tr><td>Vendre, recevoir des sacs, rendre des invendus, noter une dépense</td><td class="yes">Oui</td><td class="yes">Oui</td><td class="yes">Oui</td></tr>
+      <tr><td>Voir le stock et gérer les clients</td><td class="yes">Oui</td><td class="yes">Oui</td><td class="yes">Oui</td></tr>
+      <tr><td>Voir les prix fournisseur, les marges et le dû au fournisseur</td><td class="yes">Oui</td><td class="yes">Oui</td><td class="no">Non</td></tr>
+      <tr><td>Voir toutes les ventes</td><td class="yes">Oui</td><td class="yes">Oui</td><td>Les siennes</td></tr>
+      <tr><td>Annuler une opération, régler le fournisseur, voir les rapports</td><td class="yes">Oui</td><td class="yes">Oui</td><td class="no">Non</td></tr>
+      <tr><td>Créer les modèles, gérer les membres et les paramètres</td><td class="yes">Oui</td><td class="yes">Oui</td><td class="no">Non</td></tr>
+    </tbody>
+  </table>
+
+  <div class="section flow">
+    <h2>Questions fréquentes</h2>
+    <div class="faq">
+      <div><h3>Et si internet coupe pendant une vente ?</h3><p>Un bandeau vous prévient et la vente en cours reste enregistrée sur votre téléphone, même si vous fermez l'app. Quand le réseau revient, vous la retrouvez et vous encaissez.</p></div>
+      <div><h3>Une vendeuse a oublié son mot de passe.</h3><p>Paramètres → Membres → bouton clé à côté de son nom : Jaay crée un nouveau mot de passe provisoire à lui transmettre. Elle pourra ensuite le changer dans « Mon profil ».</p></div>
+      <div><h3>Je veux changer mon nom ou mon mot de passe.</h3><p>Touchez votre nom (en bas de la barre de gauche, ou dans le menu « Plus ») pour ouvrir « Mon profil ».</p></div>
+      <div><h3>Un sac n'apparaît pas dans mon catalogue.</h3><p>Le catalogue ne montre que les modèles en stock et marqués « Visible dans le catalogue public ». Vérifiez les deux sur la fiche du modèle.</p></div>
+      <div><h3>J'ai plusieurs fournisseurs, ou plusieurs boutiques.</h3><p>Ajoutez autant de fournisseurs que nécessaire : chacun a son propre compte. Pour une autre boutique, utilisez « Créer une boutique » dans le sélecteur de boutique ; vous passez de l'une à l'autre en un geste.</p></div>
+      <div><h3>Le mode sombre ?</h3><p>Paramètres ou « Mon profil » → Thème : Clair, Sombre ou Automatique.</p></div>
+    </div>
+  </div>
+
+</section>
+
+</body>
+</html>
