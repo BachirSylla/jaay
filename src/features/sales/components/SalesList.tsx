@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Receipt } from "lucide-react";
 import { cn } from "cn";
+import { AllHidden, CancelledToggle } from "@/components/shared/CancelledFilter";
 import { ChipGroup } from "@/components/shared/ChipGroup";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Money } from "@/components/shared/Money";
@@ -28,10 +29,12 @@ function inPeriod(sale: Sale, period: Period, now: Date): boolean {
 export function SalesList({ sales, now }: { sales: Sale[]; now: string }) {
   const { shop } = useShop();
   const [period, setPeriod] = useState<Period>("week");
+  const [showCancelled, setShowCancelled] = useState(false);
   const reference = new Date(now);
 
   const visible = sales.filter((sale) => inPeriod(sale, period, reference));
   const active = visible.filter((sale) => sale.status === "active");
+  const listed = showCancelled ? visible : active;
   const revenue = active.reduce((sum, sale) => sum + sale.totalAmount, 0);
   const margins = active.map((sale) => sale.margin);
   const margin = margins.every((m) => m !== null)
@@ -39,7 +42,7 @@ export function SalesList({ sales, now }: { sales: Sale[]; now: string }) {
     : null;
 
   const groups = new Map<string, Sale[]>();
-  for (const sale of visible) {
+  for (const sale of listed) {
     const day = toDateInputValue(sale.soldAt);
     groups.set(day, [...(groups.get(day) ?? []), sale]);
   }
@@ -82,8 +85,16 @@ export function SalesList({ sales, now }: { sales: Sale[]; now: string }) {
         ) : null}
       </div>
 
+      <CancelledToggle
+        count={visible.length - active.length}
+        shown={showCancelled}
+        onShownChange={setShowCancelled}
+      />
+
       {visible.length === 0 ? (
         <p className="py-8 text-center text-muted-foreground">{fr.common.noResults}</p>
+      ) : listed.length === 0 ? (
+        <AllHidden />
       ) : (
         [...groups.entries()].map(([day, daySales]) => (
           <section key={day} className="flex flex-col gap-2">

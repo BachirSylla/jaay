@@ -186,6 +186,10 @@
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
+  /* Cancelled operations stay out of sight until "Afficher les annulées" (HideCancelled). */
+  [data-show-cancelled="false"] [data-cancelled] {
+    display: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

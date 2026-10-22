@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Ban, Megaphone, Package, Truck, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "cn";
+import { AllHidden, CancelledToggle } from "@/components/shared/CancelledFilter";
 import { ChipGroup } from "@/components/shared/ChipGroup";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -32,6 +33,7 @@ export function ExpensesList({ expenses, now }: { expenses: Expense[]; now: stri
   const { shop } = useShop();
   const canCancel = useCan("cancelOperations");
   const [period, setPeriod] = useState<Period>("month");
+  const [showCancelled, setShowCancelled] = useState(false);
   const reference = new Date(now);
 
   const visible = expenses.filter((expense) => {
@@ -42,6 +44,7 @@ export function ExpensesList({ expenses, now }: { expenses: Expense[]; now: stri
     return reference.getTime() - new Date(expense.spentAt).getTime() <= days * DAY;
   });
   const active = visible.filter((e) => e.status === "active");
+  const listed = showCancelled ? visible : active;
   const total = active.reduce((sum, e) => sum + e.amount, 0);
   const byCategory = EXPENSE_CATEGORIES.map((category) => ({
     category,
@@ -81,11 +84,19 @@ export function ExpensesList({ expenses, now }: { expenses: Expense[]; now: stri
         </ul>
       </div>
 
+      <CancelledToggle
+        count={visible.length - active.length}
+        shown={showCancelled}
+        onShownChange={setShowCancelled}
+      />
+
       {visible.length === 0 ? (
         <p className="py-8 text-center text-muted-foreground">{fr.common.noResults}</p>
+      ) : listed.length === 0 ? (
+        <AllHidden />
       ) : (
         <ul className="divide-y divide-line-soft overflow-hidden rounded-2xl border border-line bg-surface">
-          {visible.map((expense) => {
+          {listed.map((expense) => {
             const cancelled = expense.status === "cancelled";
             const linked = expense.receptionId
               ? {

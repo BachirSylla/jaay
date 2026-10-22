@@ -72,6 +72,8 @@ Si un script `package.json` manque, crée-le avec ces noms.
 
 **`pnpm db:test` ne doit jamais être lancé sur le projet de production.** Les tests pgTAP s'exécutent sur le projet lié : ils créent des utilisateurs et des boutiques de test dans une transaction annulée, ce qui n'a sa place que sur `jaay-dev`. Avant de lancer `db:test`, vérifier que le projet lié (`supabase/.temp/project-ref`) est bien celui de développement.
 
+**Depuis le 22 octobre 2026, un seul projet Supabase (`bixrtirfupirfbljsszu`) sert au développement et à la production** (limite de deux projets gratuits). Priorité absolue : préserver les données réelles des boutiques. Donc : `pnpm db:seed` n'est plus lancé (il laisse un compte et une boutique de démo) ; `pnpm test:e2e` ne crée et ne supprime que les comptes `jaay-e2e-*@example.com` et leurs boutiques `zz-*` ; aucune autre donnée n'est supprimée ou modifiée sans accord explicite ; tout SQL est montré avant `db:push`. Le lancement de `pnpm db:test` (transaction annulée) sur ce projet reste soumis à l'accord du propriétaire du projet.
+
 **Dépôt** : https://github.com/BachirSylla/jaay.git (branche `main`).
 
 ---

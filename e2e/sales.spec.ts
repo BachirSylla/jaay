@@ -131,4 +131,12 @@ test("owner cancels a sale and the bags go back to stock", async ({ page }) => {
 
   await page.goto(`/s/${slug}/stock`);
   await expect(page.getByRole("link", { name: /Cabas cuir grainé/ })).toContainText("20 sacs");
+
+  // Hidden from the sales list until asked.
+  await page.goto(`/s/${slug}/ventes`);
+  const sale = page.getByRole("link", { name: /n° 1\b/ }).filter({ visible: true });
+  await expect(page.getByRole("link", { name: /n° 2\b/ }).filter({ visible: true })).toBeVisible();
+  await expect(sale).toHaveCount(0);
+  await page.getByRole("button", { name: /Afficher les annulées/ }).click();
+  await expect(sale).toContainText("Annulée");
 });

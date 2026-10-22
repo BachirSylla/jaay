@@ -103,6 +103,16 @@ test("owner cancels a reception with a reason", async ({ page }) => {
   await expect(page.getByText("Réception annulée.")).toBeVisible();
   await expect(page.getByText(/Annulée — Saisie en double/)).toBeVisible();
 
+  // The list keeps cancelled receptions out of sight until asked.
+  await page.goto(`/s/${slug}/receptions`);
+  const badge = page.getByText("Annulée", { exact: true }).filter({ visible: true });
+  await expect(page.getByRole("link", { name: /Ibrahima Maroquinerie/ }).first()).toBeVisible();
+  await expect(badge).toHaveCount(0);
+  await page.getByRole("button", { name: "Afficher les annulées (1)" }).click();
+  await expect(badge).toHaveCount(1);
+  await page.getByRole("button", { name: "Masquer les annulées" }).click();
+  await expect(badge).toHaveCount(0);
+
   await page.goto(`/s/${slug}/stock`);
   await expect(page.getByRole("link", { name: /Cabas cuir grainé/ })).toContainText("10 sacs");
 });

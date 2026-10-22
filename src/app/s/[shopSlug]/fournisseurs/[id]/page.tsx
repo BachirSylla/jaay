@@ -7,6 +7,7 @@ import { cn } from "cn";
 import { Forbidden } from "@/components/layout/Forbidden";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageSkeleton } from "@/components/layout/PageSkeleton";
+import { HideCancelled } from "@/components/shared/CancelledFilter";
 import { InfoRow } from "@/components/shared/InfoRow";
 import { Money } from "@/components/shared/Money";
 import { ProductThumb } from "@/components/shared/ProductThumb";
@@ -185,53 +186,61 @@ async function SupplierDetail({ params }: { params: Promise<{ shopSlug: string; 
     history.length === 0 ? (
       empty(a.noHistory)
     ) : (
-      <ul className="divide-y divide-line-soft overflow-hidden rounded-2xl border border-line bg-surface">
-        {history.map((event) => {
-          const body = (
-            <>
-              <span
-                aria-hidden="true"
-                className="grid size-10 shrink-0 place-items-center rounded-xl bg-surface-muted [&_svg]:size-[18px]"
-              >
-                {icons[event.kind]}
-              </span>
-              <span className="flex min-w-0 flex-1 flex-col">
-                <span className={cn("font-semibold", event.cancelled && "line-through opacity-60")}>
-                  {a.history[event.kind]}
-                </span>
-                <span className="truncate text-sm text-muted-foreground">
-                  {formatDate(event.date)} · {event.detail}
-                </span>
-              </span>
-              {event.amount !== null ? (
-                <Money
-                  amount={event.amount}
-                  size="md"
-                  variant={event.kind === "payment" && !event.cancelled ? "positive" : "default"}
-                  className={event.cancelled ? "line-through opacity-60" : undefined}
-                />
-              ) : null}
-            </>
-          );
-          return (
-            <li key={event.key} className="flex items-center gap-2 pr-3">
-              {event.href ? (
-                <Link
-                  href={event.href}
-                  className="flex min-h-14 min-w-0 flex-1 items-center gap-3 py-3 pl-4 hover:bg-surface-muted/40"
+      <HideCancelled count={history.filter((e) => e.cancelled).length} total={history.length}>
+        <ul className="divide-y divide-line-soft overflow-hidden rounded-2xl border border-line bg-surface">
+          {history.map((event) => {
+            const body = (
+              <>
+                <span
+                  aria-hidden="true"
+                  className="grid size-10 shrink-0 place-items-center rounded-xl bg-surface-muted [&_svg]:size-[18px]"
                 >
-                  {body}
-                </Link>
-              ) : (
-                <div className="flex min-h-14 min-w-0 flex-1 items-center gap-3 py-3 pl-4">
-                  {body}
-                </div>
-              )}
-              {event.paymentId ? <CancelPaymentButton paymentId={event.paymentId} /> : null}
-            </li>
-          );
-        })}
-      </ul>
+                  {icons[event.kind]}
+                </span>
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span
+                    className={cn("font-semibold", event.cancelled && "line-through opacity-60")}
+                  >
+                    {a.history[event.kind]}
+                  </span>
+                  <span className="truncate text-sm text-muted-foreground">
+                    {formatDate(event.date)} · {event.detail}
+                  </span>
+                </span>
+                {event.amount !== null ? (
+                  <Money
+                    amount={event.amount}
+                    size="md"
+                    variant={event.kind === "payment" && !event.cancelled ? "positive" : "default"}
+                    className={event.cancelled ? "line-through opacity-60" : undefined}
+                  />
+                ) : null}
+              </>
+            );
+            return (
+              <li
+                key={event.key}
+                data-cancelled={event.cancelled || undefined}
+                className="flex items-center gap-2 pr-3"
+              >
+                {event.href ? (
+                  <Link
+                    href={event.href}
+                    className="flex min-h-14 min-w-0 flex-1 items-center gap-3 py-3 pl-4 hover:bg-surface-muted/40"
+                  >
+                    {body}
+                  </Link>
+                ) : (
+                  <div className="flex min-h-14 min-w-0 flex-1 items-center gap-3 py-3 pl-4">
+                    {body}
+                  </div>
+                )}
+                {event.paymentId ? <CancelPaymentButton paymentId={event.paymentId} /> : null}
+              </li>
+            );
+          })}
+        </ul>
+      </HideCancelled>
     );
 
   return (

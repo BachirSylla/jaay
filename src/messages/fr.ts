@@ -40,6 +40,11 @@ export const fr = {
     name: "Nom",
     saved: "Enregistré.",
   },
+  cancelledFilter: {
+    show: "Afficher les annulées ({n})",
+    hide: "Masquer les annulées",
+    allHidden: "Tout est annulé ici.",
+  },
   theme: {
     label: "Thème",
     light: "Clair",
