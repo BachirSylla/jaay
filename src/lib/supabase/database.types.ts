@@ -206,6 +206,7 @@ export type Database = {
           shop_id: string
           supplier_id: string
           unit_cost: number
+          variant_id: string | null
         }
         Insert: {
           created_at?: string
@@ -220,6 +221,7 @@ export type Database = {
           shop_id: string
           supplier_id: string
           unit_cost: number
+          variant_id?: string | null
         }
         Update: {
           created_at?: string
@@ -234,6 +236,7 @@ export type Database = {
           shop_id?: string
           supplier_id?: string
           unit_cost?: number
+          variant_id?: string | null
         }
         Relationships: [
           {
@@ -263,6 +266,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "suppliers"
             referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "lots_variant_id_product_id_fkey"
+            columns: ["variant_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id", "product_id"]
           },
         ]
       }
@@ -308,6 +318,51 @@ export type Database = {
           },
         ]
       }
+      product_variants: {
+        Row: {
+          archived_at: string | null
+          color: string
+          created_at: string
+          id: string
+          position: number
+          product_id: string
+          shop_id: string
+        }
+        Insert: {
+          archived_at?: string | null
+          color: string
+          created_at?: string
+          id?: string
+          position?: number
+          product_id: string
+          shop_id: string
+        }
+        Update: {
+          archived_at?: string | null
+          color?: string
+          created_at?: string
+          id?: string
+          position?: number
+          product_id?: string
+          shop_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_variants_product_id_shop_id_fkey"
+            columns: ["product_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "product_variants_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           archived_at: string | null
@@ -318,6 +373,7 @@ export type Database = {
           id: string
           is_public: boolean
           low_stock_threshold: number
+          material: Database["public"]["Enums"]["bag_material"] | null
           name: string
           reseller_price: number | null
           shop_id: string
@@ -332,6 +388,7 @@ export type Database = {
           id?: string
           is_public?: boolean
           low_stock_threshold?: number
+          material?: Database["public"]["Enums"]["bag_material"] | null
           name: string
           reseller_price?: number | null
           shop_id: string
@@ -346,6 +403,7 @@ export type Database = {
           id?: string
           is_public?: boolean
           low_stock_threshold?: number
+          material?: Database["public"]["Enums"]["bag_material"] | null
           name?: string
           reseller_price?: number | null
           shop_id?: string
@@ -460,6 +518,7 @@ export type Database = {
           quantity: number
           return_id: string
           shop_id: string
+          variant_id: string | null
         }
         Insert: {
           id?: string
@@ -468,6 +527,7 @@ export type Database = {
           quantity: number
           return_id: string
           shop_id: string
+          variant_id?: string | null
         }
         Update: {
           id?: string
@@ -476,6 +536,7 @@ export type Database = {
           quantity?: number
           return_id?: string
           shop_id?: string
+          variant_id?: string | null
         }
         Relationships: [
           {
@@ -505,6 +566,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "shops"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "return_items_variant_id_product_id_fkey"
+            columns: ["variant_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id", "product_id"]
           },
         ]
       }
@@ -633,6 +701,7 @@ export type Database = {
           sale_id: string
           shop_id: string
           unit_price: number
+          variant_id: string | null
         }
         Insert: {
           id?: string
@@ -642,6 +711,7 @@ export type Database = {
           sale_id: string
           shop_id: string
           unit_price: number
+          variant_id?: string | null
         }
         Update: {
           id?: string
@@ -651,6 +721,7 @@ export type Database = {
           sale_id?: string
           shop_id?: string
           unit_price?: number
+          variant_id?: string | null
         }
         Relationships: [
           {
@@ -673,6 +744,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "shops"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_items_variant_id_product_id_fkey"
+            columns: ["variant_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id", "product_id"]
           },
         ]
       }
@@ -976,6 +1054,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_stock_colors: {
+        Args: { p_items: Json; p_product_id: string }
+        Returns: undefined
+      }
       cancel_expense: {
         Args: { p_expense_id: string; p_reason: string }
         Returns: undefined
@@ -994,6 +1076,14 @@ export type Database = {
       }
       cancel_supplier_payment: {
         Args: { p_payment_id: string; p_reason: string }
+        Returns: undefined
+      }
+      check_variant: {
+        Args: {
+          p_product_id: string
+          p_required: boolean
+          p_variant_id: string
+        }
         Returns: undefined
       }
       create_default_categories: {
@@ -1123,6 +1213,7 @@ export type Database = {
           qty_returned: number
           qty_sold: number
           unit_cost: number
+          variant_id: string
         }[]
       }
       get_receptions: {
@@ -1175,6 +1266,7 @@ export type Database = {
           received_at: string
           reception_id: string
           unit_cost: number
+          variant_id: string
         }[]
       }
       get_supplier_stock: {
@@ -1183,6 +1275,15 @@ export type Database = {
           product_id: string
           qty_available: number
           supplier_id: string
+          variant_id: string
+        }[]
+      }
+      get_variant_stock: {
+        Args: { p_shop_id: string }
+        Returns: {
+          product_id: string
+          qty_available: number
+          variant_id: string
         }[]
       }
       has_shop_role: {
@@ -1199,6 +1300,7 @@ export type Database = {
       storage_shop_id: { Args: { p_name: string }; Returns: string }
     }
     Enums: {
+      bag_material: "leather" | "faux_leather" | "canvas" | "other"
       customer_type: "individual" | "reseller"
       expense_category: "delivery" | "packaging" | "advertising" | "other"
       op_status: "active" | "cancelled"
@@ -1341,6 +1443,7 @@ export const Constants = {
   },
   public: {
     Enums: {
+      bag_material: ["leather", "faux_leather", "canvas", "other"],
       customer_type: ["individual", "reseller"],
       expense_category: ["delivery", "packaging", "advertising", "other"],
       op_status: ["active", "cancelled"],
