@@ -415,3 +415,35 @@ Toutes : `security definer`, `set search_path = ''`, vérification du rôle en p
 | Achat ferme | `acquisition_type` (`consignment`, `purchase`) sur `receptions` : un lot acheté est dû à la réception. |
 | Abonnements SaaS | Tables `plans`, `subscriptions` liées à `shops`. |
 | Paiement en ligne | `sale_payments.provider_ref`. |
+
+---
+
+## 9. Couleurs par modèle et matière (phase 10)
+
+```sql
+create type public.bag_material as enum ('leather', 'faux_leather', 'canvas', 'other');
+alter table public.products add column material public.bag_material;
+
+create table public.product_variants (
+  id uuid primary key default gen_random_uuid(),
+  shop_id uuid not null references public.shops(id) on delete cascade,
+  product_id uuid not null,                 -- (product_id, shop_id) → products
+  color text not null,                      -- unique par modèle (casse ignorée)
+  position integer not null default 0,
+  archived_at timestamptz,
+  created_at timestamptz not null default now(),
+  unique (id, product_id)
+);
+-- variant_id (nullable) sur lots, sale_items, return_items : (variant_id, product_id) → product_variants.
+-- null = « sans couleur ».
+```
+
+RLS : lecture membres ; insertion et modification owner/admin.
+
+| Fonction | Rôle | Effet |
+| --- | --- | --- |
+| `create_reception`, `create_sale`, `create_return` | inchangé | `p_items[].variant_id` ; FIFO limité à la couleur (`variant_id is not distinct from`). Réception : couleur obligatoire si le modèle a des couleurs actives. |
+| `get_variant_stock(p_shop_id)` | tous | Par modèle et couleur : `qty_available`. Aucun coût. |
+| `assign_stock_colors(p_product_id, p_items)` | owner, admin | `[{variant_id, quantity}]` : répartit le stock sans couleur, en scindant les lots si besoin (même réception, date, coût). |
+| `get_supplier_stock`, `get_reception_lines`, `get_supplier_lots` | inchangé | Renvoient en plus `variant_id`. |
+| `get_public_catalog` | anon | Ajoute `material` et `colors` (couleurs encore en stock). |
