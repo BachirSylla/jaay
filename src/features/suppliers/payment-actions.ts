@@ -26,6 +26,10 @@ export async function createSupplierPayment(
     p_method: parsed.data.method,
     p_paid_at: businessDateToTimestamp(parsed.data.paidAt),
     p_note: parsed.data.note ?? undefined,
+    p_items: parsed.data.items.map((item) => ({
+      allocation_id: item.allocationId,
+      quantity: item.quantity,
+    })),
   });
   if (error) return { ok: false, error: toErrorCode(error) };
 

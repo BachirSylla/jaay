@@ -36,6 +36,10 @@ export const supplierPaymentSchema = z.object({
     .trim()
     .max(500)
     .transform((value) => (value === "" ? null : value)),
+  /** Sold bags paid (in full) by this payment. */
+  items: z
+    .array(z.object({ allocationId: z.uuid(), quantity: z.number().int().min(1).max(1000) }))
+    .max(500),
 });
 export type SupplierPaymentInput = z.input<typeof supplierPaymentSchema>;
 export type SupplierPaymentValues = z.output<typeof supplierPaymentSchema>;

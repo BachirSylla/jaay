@@ -26,6 +26,7 @@ import {
   getSupplier,
   getSupplierBalances,
   getSupplierLots,
+  getUnpaidBags,
   listSupplierPayments,
 } from "@/features/suppliers/queries";
 import { formatDate, formatMoney, formatQty } from "@/lib/format";
@@ -66,13 +67,14 @@ async function SupplierDetail({ params }: { params: Promise<{ shopSlug: string; 
   const supplier = isUuid(id) ? await getSupplier(shop.id, id) : null;
   if (!supplier) notFound();
 
-  const [balances, lots, payments, receptions, returns, products] = await Promise.all([
+  const [balances, lots, payments, receptions, returns, products, unpaid] = await Promise.all([
     getSupplierBalances(shop.id),
     getSupplierLots(supplier.id),
     listSupplierPayments(shop.id, supplier.id),
     getReceptions(shop.id),
     listReturns(shop.id, { supplierId: supplier.id }),
     listProducts(shop.id),
+    getUnpaidBags(shop.id, supplier.id),
   ]);
   const account = balances[supplier.id] ?? {
     due: 0,
@@ -292,7 +294,11 @@ async function SupplierDetail({ params }: { params: Promise<{ shopSlug: string; 
                   })}
             </span>
             <div className="mt-2 flex flex-wrap gap-2">
-              <SupplierPaymentDialog supplierId={supplier.id} balance={account.balance} />
+              <SupplierPaymentDialog
+                supplierId={supplier.id}
+                balance={account.balance}
+                unpaid={unpaid}
+              />
               {account.qtyInStock > 0 ? (
                 <Button
                   asChild

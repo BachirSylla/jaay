@@ -36,11 +36,24 @@ test("owner sees the balance due and records a payment", async ({ page }) => {
 
   await page.getByRole("button", { name: "Régler" }).click();
   const dialog = page.getByRole("dialog");
+  // Unpaid sold bags, one checkbox per bag: tick the first one, the amount follows.
+  const bags = dialog.getByRole("checkbox");
+  const unpaidBefore = await bags.count();
+  expect(unpaidBefore).toBeGreaterThan(1);
+  await bags.first().check();
+  await expect(dialog.getByLabel("Montant")).not.toHaveValue("");
+  // Paying more than the bag ticked: the rest is an advance.
   await dialog.getByLabel("Montant").fill("20000");
+  await expect(dialog.getByText(/Dont acompte/)).toBeVisible();
   await expect(dialog.getByLabel("21 000 F")).toBeVisible();
   await dialog.getByRole("button", { name: "Enregistrer le règlement" }).click();
   await expect(page.getByText("Règlement enregistré.")).toBeVisible();
   await expect(page.getByLabel("21 000 F").first()).toBeVisible();
+
+  // The bag paid is no longer offered.
+  await page.getByRole("button", { name: "Régler" }).click();
+  await expect(page.getByRole("dialog").getByRole("checkbox")).toHaveCount(unpaidBefore - 1);
+  await page.keyboard.press("Escape");
 
   await page.getByRole("button", { name: "Historique" }).click();
   await expect(page.getByText("Règlement", { exact: true })).toBeVisible();

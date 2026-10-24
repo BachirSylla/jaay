@@ -24,8 +24,9 @@ const BAG_HEX: Record<string, string> = {
 };
 
 /**
- * Receipt of a supplier payment as a PNG, to share on WhatsApp: the sold bags it pays for
- * (with their photo, so the supplier recognizes them) and the account after it.
+ * Receipt of a supplier payment as a PNG, to share on WhatsApp: the sold bags it pays for, at
+ * supplier price, with their photo so the supplier recognizes them, any advance, and the
+ * account after it. Never shows sale prices.
  * Owner/admin only, like the payments themselves.
  */
 export async function GET(
@@ -119,17 +120,9 @@ export async function GET(
         {receipt.lines.map((line, index) => {
           const photo = photos[index];
           const bag = bagColorFor(line.color);
-          const detail = [
-            line.bags > 0 ? `${line.bags} × ${formatMoney(line.unitCost)}` : null,
-            line.partial > 0 ? `${t.partial} : ${formatMoney(line.partial)}` : null,
-          ]
-            .filter(Boolean)
-            .join(" + ");
+          const detail = `${line.bags} × ${formatMoney(line.unitCost)}`;
           return (
-            <div
-              key={`${line.productId}:${line.variantId}:${line.unitCost}`}
-              style={{ display: "flex", alignItems: "center", gap: 28 }}
-            >
+            <div key={line.key} style={{ display: "flex", alignItems: "center", gap: 28 }}>
               {photo ? (
                 // eslint-disable-next-line @next/next/no-img-element -- rendered to PNG by next/og
                 <img

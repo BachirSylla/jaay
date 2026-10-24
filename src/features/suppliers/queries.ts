@@ -1,6 +1,5 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
-import { type CoveredLine, paymentCoverage } from "./payment-coverage";
 import type { Supplier, SupplierBalance, SupplierLot, SupplierPayment } from "./types";
 
 const COLUMNS = "id, name, phone, address, notes, archived_at, created_at";
@@ -115,106 +114,178 @@ export async function listSupplierPayments(
   }));
 }
 
+/** Bags of one sale line sold from this supplier's lots, at supplier price. */
+export type SoldBagLine = {
+  allocationId: string;
+  saleNumber: number;
+  soldAt: string;
+  productId: string;
+  /** "Model · Color". */
+  name: string;
+  color: string | null;
+  photoPath: string | null;
+  unitCost: number;
+  /** Bags of the line not paid to the supplier yet. */
+  unpaid: number;
+};
+
+type AllocationRow = {
+  id: string;
+  quantity: number;
+  unit_cost: number;
+  item: {
+    product_id: string;
+    product: {
+      name: string;
+      color: string | null;
+      photos: { storage_path: string; position: number }[];
+    } | null;
+    variant: { color: string } | null;
+    sale: { sold_at: string; number: number; status: string } | null;
+  } | null;
+};
+
+const ALLOCATION_COLUMNS = `
+  id, quantity, unit_cost,
+  item:sale_items (
+    product_id,
+    product:products (name, color, photos:product_photos (storage_path, position)),
+    variant:product_variants (color),
+    sale:sales (sold_at, number, status)
+  )
+`;
+
+function describe(row: AllocationRow) {
+  const product = row.item?.product;
+  const color = row.item?.variant?.color ?? null;
+  const cover = [...(product?.photos ?? [])].sort((a, b) => a.position - b.position)[0];
+  return {
+    productId: row.item?.product_id ?? "",
+    name: [product?.name ?? "", color].filter(Boolean).join(" · "),
+    color: color ?? product?.color ?? null,
+    photoPath: cover?.storage_path ?? null,
+  };
+}
+
+/** Sold bags of a supplier not paid yet, oldest sale first (owner/admin: RLS). */
+export async function getUnpaidBags(shopId: string, supplierId: string): Promise<SoldBagLine[]> {
+  const supabase = await createClient();
+  const [allocations, paidItems] = await Promise.all([
+    supabase
+      .from("sale_item_allocations")
+      .select(ALLOCATION_COLUMNS)
+      .eq("shop_id", shopId)
+      .eq("supplier_id", supplierId),
+    supabase
+      .from("supplier_payment_items")
+      .select("allocation_id, quantity, payment:supplier_payments (status, supplier_id)")
+      .eq("shop_id", shopId),
+  ]);
+  if (allocations.error) throw allocations.error;
+  if (paidItems.error) throw paidItems.error;
+
+  const paid = new Map<string, number>();
+  for (const item of paidItems.data ?? []) {
+    if (item.payment?.status !== "active" || item.payment.supplier_id !== supplierId) continue;
+    paid.set(item.allocation_id, (paid.get(item.allocation_id) ?? 0) + item.quantity);
+  }
+
+  return ((allocations.data ?? []) as AllocationRow[])
+    .filter((row) => row.item?.sale?.status === "active")
+    .map((row) => ({
+      allocationId: row.id,
+      saleNumber: row.item!.sale!.number,
+      soldAt: row.item!.sale!.sold_at,
+      ...describe(row),
+      unitCost: row.unit_cost,
+      unpaid: row.quantity - (paid.get(row.id) ?? 0),
+    }))
+    .filter((line) => line.unpaid > 0)
+    .sort((a, b) => a.soldAt.localeCompare(b.soldAt) || a.saleNumber - b.saleNumber);
+}
+
+export type PaymentReceiptLine = {
+  key: string;
+  name: string;
+  color: string | null;
+  photoPath: string | null;
+  unitCost: number;
+  bags: number;
+  amount: number;
+};
+
 export type PaymentReceipt = {
   supplier: Supplier;
   payment: SupplierPayment;
-  lines: (CoveredLine & { name: string; color: string | null; photoPath: string | null })[];
+  /** Bags this payment pays for, grouped by model, color and supplier price. */
+  lines: PaymentReceiptLine[];
+  /** Part of the payment not tied to bags. */
   advance: number;
   /** At the payment date: bags sold at supplier price, total paid (this one included). */
   soldTotal: number;
   paidTotal: number;
 };
 
-/**
- * Data of a supplier payment receipt: the sold bags this payment pays for ("first sold, first
- * paid") and the account after it. Owner/admin only (allocations are not readable otherwise).
- */
+/** Data of a supplier payment receipt (owner/admin only: RLS). */
 export async function getPaymentReceipt(
   shopId: string,
   supplierId: string,
   paymentId: string,
 ): Promise<PaymentReceipt | null> {
   const supabase = await createClient();
-  const [supplier, payments, allocationsResult] = await Promise.all([
+  const [supplier, payments, items, sold] = await Promise.all([
     getSupplier(shopId, supplierId),
     listSupplierPayments(shopId, supplierId),
     supabase
+      .from("supplier_payment_items")
+      .select(`quantity, amount, allocation:sale_item_allocations (${ALLOCATION_COLUMNS})`)
+      .eq("shop_id", shopId)
+      .eq("payment_id", paymentId),
+    supabase
       .from("sale_item_allocations")
-      .select(
-        "id, quantity, unit_cost, item:sale_items (product_id, variant_id, sale:sales (sold_at, number, status))",
-      )
+      .select("quantity, unit_cost, item:sale_items (sale:sales (sold_at, status))")
       .eq("shop_id", shopId)
       .eq("supplier_id", supplierId),
   ]);
-  if (allocationsResult.error) throw allocationsResult.error;
+  if (items.error) throw items.error;
+  if (sold.error) throw sold.error;
   const payment = payments.find((p) => p.id === paymentId && p.status === "active");
   if (!supplier || !payment) return null;
 
-  // Payments in the order they were made; sold bags in the order of the sales.
-  const active = payments
-    .filter((p) => p.status === "active")
-    .sort((a, b) => a.paidAt.localeCompare(b.paidAt) || a.id.localeCompare(b.id));
-  const index = active.findIndex((p) => p.id === paymentId);
-  const paidBefore = active.slice(0, index).reduce((sum, p) => sum + p.amount, 0);
+  const lines = new Map<string, PaymentReceiptLine>();
+  for (const item of items.data ?? []) {
+    const allocation = item.allocation as unknown as AllocationRow | null;
+    if (!allocation) continue;
+    const bag = describe(allocation);
+    const key = `${bag.name}:${allocation.unit_cost}`;
+    const line = lines.get(key) ?? {
+      key,
+      name: bag.name,
+      color: bag.color,
+      photoPath: bag.photoPath,
+      unitCost: allocation.unit_cost,
+      bags: 0,
+      amount: 0,
+    };
+    line.bags += item.quantity;
+    line.amount += item.amount;
+    lines.set(key, line);
+  }
+  const covered = [...lines.values()].reduce((sum, line) => sum + line.amount, 0);
 
-  const sold = (allocationsResult.data ?? [])
-    .filter((row) => row.item?.sale?.status === "active")
-    .sort(
-      (a, b) =>
-        a.item!.sale!.sold_at.localeCompare(b.item!.sale!.sold_at) ||
-        a.item!.sale!.number - b.item!.sale!.number ||
-        a.id.localeCompare(b.id),
-    );
-  const coverage = paymentCoverage(
-    sold.map((row) => ({
-      productId: row.item!.product_id,
-      variantId: row.item!.variant_id,
-      quantity: row.quantity,
-      unitCost: row.unit_cost,
-    })),
-    paidBefore,
-    payment.amount,
-  );
-  const soldTotal = sold
-    .filter((row) => row.item!.sale!.sold_at <= payment.paidAt)
+  const soldTotal = (sold.data ?? [])
+    .filter((row) => row.item?.sale?.status === "active" && row.item.sale.sold_at <= payment.paidAt)
     .reduce((sum, row) => sum + row.quantity * row.unit_cost, 0);
-
-  const productIds = [...new Set(coverage.lines.map((line) => line.productId))];
-  const variantIds = [
-    ...new Set(coverage.lines.map((line) => line.variantId).filter((id) => id !== null)),
-  ];
-  const [productsResult, variantsResult] = await Promise.all([
-    productIds.length
-      ? supabase
-          .from("products")
-          .select("id, name, color, photos:product_photos (storage_path, position)")
-          .in("id", productIds)
-      : Promise.resolve({ data: [], error: null }),
-    variantIds.length
-      ? supabase.from("product_variants").select("id, color").in("id", variantIds)
-      : Promise.resolve({ data: [], error: null }),
-  ]);
-  if (productsResult.error) throw productsResult.error;
-  if (variantsResult.error) throw variantsResult.error;
-  const products = new Map((productsResult.data ?? []).map((p) => [p.id, p]));
-  const colors = new Map((variantsResult.data ?? []).map((v) => [v.id, v.color]));
+  const paidTotal = payments
+    .filter((p) => p.status === "active" && p.paidAt <= payment.paidAt)
+    .reduce((sum, p) => sum + p.amount, 0);
 
   return {
     supplier,
     payment,
-    lines: coverage.lines.map((line) => {
-      const product = products.get(line.productId);
-      const color = line.variantId ? (colors.get(line.variantId) ?? null) : null;
-      const cover = [...(product?.photos ?? [])].sort((a, b) => a.position - b.position)[0];
-      return {
-        ...line,
-        name: [product?.name ?? "", color].filter(Boolean).join(" · "),
-        color: color ?? product?.color ?? null,
-        photoPath: cover?.storage_path ?? null,
-      };
-    }),
-    advance: coverage.advance,
+    lines: [...lines.values()],
+    advance: payment.amount - covered,
     soldTotal,
-    paidTotal: paidBefore + payment.amount,
+    paidTotal,
   };
 }
