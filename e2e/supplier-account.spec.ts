@@ -44,6 +44,17 @@ test("owner sees the balance due and records a payment", async ({ page }) => {
 
   await page.getByRole("button", { name: "Historique" }).click();
   await expect(page.getByText("Règlement", { exact: true })).toBeVisible();
+
+  // Receipt image: on desktop (no file sharing) it is downloaded, then WhatsApp opens.
+  const popup = page.waitForEvent("popup").catch(() => null);
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Partager le reçu — 20 000 F" }).click();
+  const file = await download;
+  expect(file.suggestedFilename()).toMatch(/^reglement-\d{4}-\d{2}-\d{2}\.png$/);
+  const bytes = await (await file.createReadStream()).toArray();
+  // PNG signature.
+  expect(Buffer.concat(bytes).subarray(1, 4).toString()).toBe("PNG");
+  await (await popup)?.close();
 });
 
 test("owner returns unsold bags from the supplier page", async ({ page }) => {

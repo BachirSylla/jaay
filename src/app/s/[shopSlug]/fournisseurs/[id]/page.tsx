@@ -18,6 +18,7 @@ import { getReceptions } from "@/features/receptions/queries";
 import { listReturns } from "@/features/returns/queries";
 import { requireShopAction } from "@/features/shop/require";
 import { CancelPaymentButton } from "@/features/suppliers/components/CancelPaymentButton";
+import { SharePaymentReceiptButton } from "@/features/suppliers/components/SharePaymentReceiptButton";
 import { SupplierActions } from "@/features/suppliers/components/SupplierActions";
 import { SupplierPaymentDialog } from "@/features/suppliers/components/SupplierPaymentDialog";
 import { SupplierTabs } from "@/features/suppliers/components/SupplierTabs";
@@ -238,7 +239,20 @@ async function SupplierDetail({ params }: { params: Promise<{ shopSlug: string; 
                     {body}
                   </div>
                 )}
-                {event.paymentId ? <CancelPaymentButton paymentId={event.paymentId} /> : null}
+                {event.paymentId ? (
+                  <>
+                    <SharePaymentReceiptButton
+                      supplier={supplier}
+                      payment={{
+                        id: event.paymentId,
+                        amount: event.amount ?? 0,
+                        paidAt: event.date,
+                      }}
+                      iconOnly
+                    />
+                    <CancelPaymentButton paymentId={event.paymentId} />
+                  </>
+                ) : null}
               </>
             ),
           };
