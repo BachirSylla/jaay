@@ -945,6 +945,55 @@ export type Database = {
         }
         Relationships: []
       }
+      supplier_payment_items: {
+        Row: {
+          allocation_id: string
+          amount: number
+          id: string
+          payment_id: string
+          quantity: number
+          shop_id: string
+        }
+        Insert: {
+          allocation_id: string
+          amount: number
+          id?: string
+          payment_id: string
+          quantity: number
+          shop_id: string
+        }
+        Update: {
+          allocation_id?: string
+          amount?: number
+          id?: string
+          payment_id?: string
+          quantity?: number
+          shop_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_payment_items_allocation_id_shop_id_fkey"
+            columns: ["allocation_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "sale_item_allocations"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "supplier_payment_items_payment_id_shop_id_fkey"
+            columns: ["payment_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_payments"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "supplier_payment_items_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       supplier_payments: {
         Row: {
           amount: number
@@ -1173,6 +1222,7 @@ export type Database = {
       create_supplier_payment: {
         Args: {
           p_amount: number
+          p_items?: Json
           p_method: Database["public"]["Enums"]["payment_method"]
           p_note?: string
           p_paid_at?: string
