@@ -22,6 +22,8 @@ export type ReceptionLine = {
   productId: string;
   productName: string;
   productColor: string | null;
+  /** Color of the lot (null: model without colors or stock recorded without color). */
+  colorName: string | null;
   photoPath: string | null;
   qtyReceived: number;
   qtySold: number;

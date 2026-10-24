@@ -81,6 +81,7 @@ export async function getSupplierLots(supplierId: string): Promise<SupplierLot[]
     lotId: row.lot_id,
     receptionId: row.reception_id,
     productId: row.product_id,
+    variantId: row.variant_id,
     receivedAt: row.received_at,
     qtyReceived: row.qty_received,
     qtySold: row.qty_sold,

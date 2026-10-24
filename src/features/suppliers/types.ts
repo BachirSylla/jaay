@@ -23,6 +23,8 @@ export type SupplierLot = {
   lotId: string;
   receptionId: string;
   productId: string;
+  /** Color of the lot (null: no color). */
+  variantId: string | null;
   receivedAt: string;
   qtyReceived: number;
   qtySold: number;

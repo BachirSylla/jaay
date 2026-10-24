@@ -1,11 +1,14 @@
 import "server-only";
+import { variantKey } from "@/features/catalog/variants";
 import { createClient } from "@/lib/supabase/server";
 import type { ReturnSummary, SupplierStock } from "./types";
 
 const RETURN_COLUMNS = `
   id, supplier_id, returned_at, note, status, cancel_reason, created_by,
   supplier:suppliers (name),
-  items:return_items (product_id, quantity, product:products (name, color)),
+  items:return_items (
+    product_id, variant_id, quantity, product:products (name, color), variant:product_variants (color)
+  ),
   expenses:expenses (amount, status)
 `;
 
@@ -20,21 +23,24 @@ type ReturnRow = {
   supplier: { name: string } | null;
   items: {
     product_id: string;
+    variant_id: string | null;
     quantity: number;
     product: { name: string; color: string | null } | null;
+    variant: { color: string } | null;
   }[];
   expenses: { amount: number; status: string }[];
 };
 
 function toReturn(row: ReturnRow): ReturnSummary {
-  // A return line is split by lot: merge them per product.
+  // A return line is split by lot: merge them per model and color.
   const byProduct = new Map<string, ReturnSummary["items"][number]>();
   for (const item of row.items) {
-    const current = byProduct.get(item.product_id);
-    byProduct.set(item.product_id, {
+    const key = `${item.product_id}:${variantKey(item.variant_id)}`;
+    const current = byProduct.get(key);
+    byProduct.set(key, {
       productId: item.product_id,
-      productName: item.product?.name ?? "",
-      productColor: item.product?.color ?? null,
+      productName: [item.product?.name ?? "", item.variant?.color].filter(Boolean).join(" · "),
+      productColor: item.variant?.color ?? item.product?.color ?? null,
       quantity: (current?.quantity ?? 0) + item.quantity,
     });
   }
@@ -90,6 +96,9 @@ export async function getSupplierStock(shopId: string): Promise<SupplierStock> {
   const { data, error } = await supabase.rpc("get_supplier_stock", { p_shop_id: shopId });
   if (error) throw error;
   const stock: SupplierStock = {};
-  for (const row of data ?? []) (stock[row.supplier_id] ??= {})[row.product_id] = row.qty_available;
+  for (const row of data ?? []) {
+    (stock[row.supplier_id] ??= {})[`${row.product_id}:${variantKey(row.variant_id)}`] =
+      row.qty_available;
+  }
   return stock;
 }

@@ -19,5 +19,8 @@ export type ReturnSummary = {
   }[];
 };
 
-/** Bags available per supplier and product (get_supplier_stock, no cost). */
+/**
+ * Bags available per supplier, then per `${productId}:${variantKey}` (get_supplier_stock,
+ * no cost).
+ */
 export type SupplierStock = Record<string, Record<string, number>>;

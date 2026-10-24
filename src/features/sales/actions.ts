@@ -1,6 +1,7 @@
 "use server";
 
 import { refresh } from "next/cache";
+import { variantIdOf, variantKey } from "@/features/catalog/variants";
 import { cancelReasonSchema } from "@/features/receptions/schemas";
 import { type ActionResult, toErrorCode } from "@/lib/errors";
 import { businessDateToTimestamp } from "@/lib/format";
@@ -9,8 +10,8 @@ import { isUuid } from "@/lib/uuid";
 import { saleSchema, type SaleValues } from "./schemas";
 
 export type CreateSaleResult = ActionResult<{ id: string; number: number }> & {
-  /** On INSUFFICIENT_STOCK: product concerned and bags really available. */
-  stock?: { productId: string; available: number };
+  /** On INSUFFICIENT_STOCK: model and color concerned, and bags really available. */
+  stock?: { productId: string; variantKey: string; available: number };
 };
 
 export async function createSale(shopId: string, values: SaleValues): Promise<CreateSaleResult> {
@@ -27,6 +28,7 @@ export async function createSale(shopId: string, values: SaleValues): Promise<Cr
     p_sold_at: businessDateToTimestamp(sale.soldAt),
     p_items: sale.lines.map((line) => ({
       product_id: line.productId,
+      variant_id: variantIdOf(line.variantKey),
       quantity: line.quantity,
       unit_price: line.unitPrice,
     })),
@@ -38,11 +40,19 @@ export async function createSale(shopId: string, values: SaleValues): Promise<Cr
     const code = toErrorCode(error);
     if (code === "INSUFFICIENT_STOCK" && error?.details) {
       try {
-        const details = JSON.parse(error.details) as { product_id: string; available: number };
+        const details = JSON.parse(error.details) as {
+          product_id: string;
+          variant_id?: string | null;
+          available: number;
+        };
         return {
           ok: false,
           error: code,
-          stock: { productId: details.product_id, available: details.available },
+          stock: {
+            productId: details.product_id,
+            variantKey: variantKey(details.variant_id),
+            available: details.available,
+          },
         };
       } catch {
         // Fall back to the generic message.

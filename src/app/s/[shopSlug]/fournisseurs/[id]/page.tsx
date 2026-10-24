@@ -13,6 +13,7 @@ import { Money } from "@/components/shared/Money";
 import { ProductThumb } from "@/components/shared/ProductThumb";
 import { Button } from "@/components/ui/button";
 import { listProducts } from "@/features/catalog/queries";
+import { variantLabel } from "@/features/catalog/variants";
 import { getReceptions } from "@/features/receptions/queries";
 import { listReturns } from "@/features/returns/queries";
 import { requireShopAction } from "@/features/shop/require";
@@ -149,7 +150,11 @@ async function SupplierDetail({ params }: { params: Promise<{ shopSlug: string; 
                   className="size-12 shrink-0"
                 />
                 <div className="flex min-w-0 flex-1 flex-col">
-                  <span className="truncate font-semibold">{product?.name}</span>
+                  <span className="truncate font-semibold">
+                    {[product?.name, lot.variantId ? variantLabel(product, lot.variantId) : null]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </span>
                   <span className="text-[13px] text-muted-foreground">
                     {fill(a.lotOf, { date: formatDate(lot.receivedAt) })} ·{" "}
                     {formatMoney(lot.unitCost)}

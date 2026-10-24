@@ -1,22 +1,30 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { EyeOff } from "lucide-react";
+import { ColorDot } from "@/components/shared/ColorDot";
 import { Money } from "@/components/shared/Money";
 import { ProductThumb } from "@/components/shared/ProductThumb";
 import { fr } from "@/messages/fr";
 import type { Product } from "../types";
+import type { ColorOption } from "../variants";
 
-/** Stock grid card (DESIGN.md §6): thumbnail, name, category, price, optional stock line. */
+/**
+ * Stock grid card (DESIGN.md §6): thumbnail, name, category and material, price, optional
+ * stock line and stock per color.
+ */
 export function ProductCard({
   product,
   href,
   stock,
   badge,
+  colors,
 }: {
   product: Product;
   href: string;
   stock?: ReactNode;
   badge?: ReactNode;
+  /** Bags left per color (shown as dots with counts). */
+  colors?: ColorOption[];
 }) {
   return (
     <Link
@@ -44,8 +52,24 @@ export function ProductCard({
       <div className="flex min-w-0 flex-col gap-0.5 px-1 pb-1">
         <span className="truncate font-semibold">{product.name}</span>
         <span className="truncate text-[13px] text-muted-foreground">
-          {[product.categoryName, product.color].filter(Boolean).join(" · ") || " "}
+          {[product.categoryName, product.material ? fr.catalog.materials[product.material] : null]
+            .filter(Boolean)
+            .join(" · ") || " "}
         </span>
+        {colors && colors.length > 0 ? (
+          <ul className="mt-1 flex flex-wrap gap-x-2.5 gap-y-1" aria-label={fr.variants.stockTitle}>
+            {colors.map((option) => (
+              <li
+                key={option.key}
+                className="flex items-center gap-1 text-[13px] font-semibold tabular-nums"
+              >
+                <ColorDot color={option.color} />
+                <span className="sr-only">{option.label}</span>
+                {option.available}
+              </li>
+            ))}
+          </ul>
+        ) : null}
         <div className="mt-1 flex items-baseline justify-between gap-2">
           {stock ?? <span />}
           {product.suggestedPrice !== null ? (

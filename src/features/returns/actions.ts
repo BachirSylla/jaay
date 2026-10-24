@@ -1,6 +1,7 @@
 "use server";
 
 import { refresh } from "next/cache";
+import { variantIdOf } from "@/features/catalog/variants";
 import { cancelReasonSchema } from "@/features/receptions/schemas";
 import { type ActionResult, toErrorCode } from "@/lib/errors";
 import { businessDateToTimestamp } from "@/lib/format";
@@ -23,7 +24,11 @@ export async function createReturn(
     p_returned_at: businessDateToTimestamp(returnedAt),
     p_items: lines
       .filter((line) => line.quantity > 0)
-      .map((line) => ({ product_id: line.productId, quantity: line.quantity })),
+      .map((line) => ({
+        product_id: line.productId,
+        variant_id: variantIdOf(line.variantKey),
+        quantity: line.quantity,
+      })),
     p_delivery_fee: deliveryFee ?? 0,
     p_note: note ?? undefined,
   });

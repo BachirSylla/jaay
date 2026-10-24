@@ -19,8 +19,15 @@ import { SegmentedControl } from "@/components/shared/SegmentedControl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { ColorChoice } from "@/features/catalog/components/ColorChoice";
 import { ProductPicker } from "@/features/catalog/components/ProductPicker";
 import type { Product, ProductStock } from "@/features/catalog/types";
+import {
+  colorOptions,
+  hasColors,
+  variantLabel,
+  type VariantStock,
+} from "@/features/catalog/variants";
 import type { Customer } from "@/features/customers/types";
 import { useShop } from "@/features/shop/shop-context";
 import { errorMessage } from "@/lib/errors";
@@ -87,6 +94,7 @@ function NewSaleFormBody({
   nextNumber,
   products,
   stock,
+  variantStock,
   customers,
   fifoLots,
   showMargin,
@@ -96,8 +104,10 @@ function NewSaleFormBody({
   nextNumber: number;
   products: Product[];
   stock: Record<string, ProductStock>;
+  /** Bags per model and color. */
+  variantStock: VariantStock;
   customers: Customer[];
-  /** Available lots per product (owner/admin only, empty for managers). */
+  /** Available lots per `${productId}:${variantKey}` (owner/admin only, empty for managers). */
   fifoLots: Record<string, FifoLot[]>;
   /** Owner/admin: estimated margin and below-cost warnings. */
   showMargin: boolean;
@@ -133,11 +143,33 @@ function NewSaleFormBody({
   const bags = lines.reduce((sum, line) => sum + (line.quantity ?? 0), 0);
   const cost = finance
     ? lines.reduce(
-        (sum, line) => sum + (fifoCost(fifoLots[line.productId] ?? [], line.quantity) ?? 0),
+        (sum, line) =>
+          sum +
+          (fifoCost(fifoLots[`${line.productId}:${line.variantKey}`] ?? [], line.quantity) ?? 0),
         0,
       )
     : null;
   const margin = cost === null ? null : total - cost;
+
+  // Colors (or uncolored stock) of a model that still hold bags.
+  const optionsOf = (product: Product) => colorOptions(product, variantStock[product.id], "stock");
+  const linesOf = (productId: string) => lines.filter((line) => line.productId === productId);
+  // A model is fully added once each of its colors in stock has a line.
+  const fullyAdded = products
+    .filter((p) => linesOf(p.id).length >= Math.max(1, optionsOf(p).length))
+    .map((p) => p.id);
+  const addLine = (product: Product) => {
+    const options = optionsOf(product);
+    const taken = linesOf(product.id).map((line) => line.variantKey);
+    const free = options.filter((option) => !taken.includes(option.key));
+    append({
+      productId: product.id,
+      // A single possible color is chosen for the seller; otherwise they pick it.
+      variantKey: options.length === 1 ? options[0].key : free.length === 1 ? free[0].key : "",
+      quantity: 1,
+      unitPrice: priceFor(product, customerType),
+    });
+  };
 
   const setType = (type: CustomerType) => {
     form.setValue("customerType", type);
@@ -158,7 +190,10 @@ function NewSaleFormBody({
     restored.current = true;
     const draft = readDraft(draftKey);
     if (!draft) return;
-    const knownLines = draft.values.lines?.filter((line) => productById.has(line.productId)) ?? [];
+    const knownLines =
+      draft.values.lines
+        ?.filter((line) => productById.has(line.productId))
+        .map((line) => ({ ...line, variantKey: line.variantKey ?? "" })) ?? [];
     if (knownLines.length === 0) return;
     form.reset({ ...draft.values, lines: knownLines, payments: [] });
     // Restoring from device storage can only happen after hydration (no storage on the
@@ -202,7 +237,13 @@ function NewSaleFormBody({
         }
         if (!result.ok) {
           if (result.stock) {
-            const name = productById.get(result.stock.productId)?.name ?? "";
+            const product = productById.get(result.stock.productId);
+            const name = [
+              product?.name ?? "",
+              product && hasColors(product) ? variantLabel(product, result.stock.variantKey) : null,
+            ]
+              .filter(Boolean)
+              .join(" · ");
             setFormError(fill(t.onlyLeft, { n: result.stock.available, name }));
           } else {
             setFormError(errorMessage(result.error));
@@ -267,10 +308,28 @@ function NewSaleFormBody({
           {fields.map((field, index) => {
             const product = productById.get(field.productId);
             const line = lines[index];
-            const available = stock[field.productId]?.available ?? 0;
+            const options = product ? optionsOf(product) : [];
+            const colored = product ? hasColors(product) : false;
+            const available = line?.variantKey
+              ? (variantStock[field.productId]?.[line.variantKey] ?? 0)
+              : (stock[field.productId]?.available ?? 0);
+            const lineName = [
+              product?.name ?? "",
+              colored && line?.variantKey ? variantLabel(product, line.variantKey) : null,
+            ]
+              .filter(Boolean)
+              .join(" · ");
+            const takenKeys = lines
+              .filter((other, i) => i !== index && other.productId === field.productId)
+              .map((other) => other.variantKey);
+            const canAddColor =
+              product !== undefined && linesOf(product.id).length < options.length;
             const suggested = priceFor(product, customerType);
             const lineCost = finance
-              ? fifoCost(fifoLots[field.productId] ?? [], line?.quantity ?? 1)
+              ? fifoCost(
+                  fifoLots[`${field.productId}:${line?.variantKey}`] ?? [],
+                  line?.quantity ?? 1,
+                )
               : null;
             const belowCost =
               lineCost !== null &&
@@ -294,7 +353,7 @@ function NewSaleFormBody({
                     className="size-14 shrink-0"
                   />
                   <div className="flex min-w-0 flex-1 flex-col">
-                    <span className="truncate font-semibold">{product?.name}</span>
+                    <span className="truncate font-semibold">{lineName}</span>
                     <span className="text-[13px] text-muted-foreground">
                       {fill(t.inStock, { n: available })}
                     </span>
@@ -303,7 +362,7 @@ function NewSaleFormBody({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    aria-label={`${t.removeLine} — ${product?.name ?? ""}`}
+                    aria-label={`${t.removeLine} — ${lineName}`}
                     onClick={() => remove(index)}
                   >
                     <X aria-hidden="true" />
@@ -315,7 +374,7 @@ function NewSaleFormBody({
                     name={`lines.${index}.quantity`}
                     render={({ field: quantity }) => (
                       <QuantityStepper
-                        label={`${t.quantity} — ${product?.name ?? ""}`}
+                        label={`${t.quantity} — ${lineName}`}
                         value={quantity.value}
                         max={Math.max(1, available)}
                         onValueChange={quantity.onChange}
@@ -328,7 +387,7 @@ function NewSaleFormBody({
                     render={({ field: price }) => (
                       <div className="min-w-0 flex-1">
                         <PriceInput
-                          aria-label={`${t.price} — ${product?.name ?? ""}`}
+                          aria-label={`${t.price} — ${lineName}`}
                           placeholder={t.price}
                           value={price.value}
                           onValueChange={(next) => {
@@ -355,6 +414,43 @@ function NewSaleFormBody({
                     )}
                   />
                 </div>
+                {product && (options.length > 1 || (colored && !line?.variantKey)) ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Controller
+                      control={form.control}
+                      name={`lines.${index}.variantKey`}
+                      render={({ field: variant }) => (
+                        <ColorChoice
+                          label={`${fr.variants.label} — ${product.name}`}
+                          options={options}
+                          value={variant.value}
+                          onValueChange={(key) => {
+                            variant.onChange(key);
+                            // Keep the quantity within the stock of the chosen color.
+                            const left = variantStock[product.id]?.[key] ?? 0;
+                            if ((line?.quantity ?? 1) > left) {
+                              form.setValue(`lines.${index}.quantity`, Math.max(1, left));
+                            }
+                          }}
+                          takenKeys={takenKeys}
+                          showStock
+                          invalid={Boolean(errors.lines?.[index]?.variantKey)}
+                        />
+                      )}
+                    />
+                    {canAddColor ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => addLine(product)}
+                      >
+                        <Plus data-icon="inline-start" aria-hidden="true" />
+                        {fr.variants.addColor}
+                      </Button>
+                    ) : null}
+                  </div>
+                ) : null}
               </motion.div>
             );
           })}
@@ -363,15 +459,9 @@ function NewSaleFormBody({
         <ProductPicker
           products={products}
           stock={stock}
-          selectedIds={lines.map((line) => line.productId)}
+          selectedIds={fullyAdded}
           isDisabled={(product) => (stock[product.id]?.available ?? 0) <= 0}
-          onSelect={(product) =>
-            append({
-              productId: product.id,
-              quantity: 1,
-              unitPrice: priceFor(product, customerType),
-            })
-          }
+          onSelect={addLine}
           trigger={
             <Button
               type="button"

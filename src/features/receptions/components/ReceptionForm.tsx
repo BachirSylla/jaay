@@ -21,8 +21,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { ColorChoice } from "@/features/catalog/components/ColorChoice";
 import { ProductPicker } from "@/features/catalog/components/ProductPicker";
 import type { Product } from "@/features/catalog/types";
+import { colorOptions, hasColors, NO_VARIANT, variantLabel } from "@/features/catalog/variants";
 import { useShop } from "@/features/shop/shop-context";
 import type { Supplier } from "@/features/suppliers/types";
 import { errorMessage } from "@/lib/errors";
@@ -68,6 +70,21 @@ function ReceptionFormBody({
   const { errors } = form.formState;
 
   const productById = new Map(products.map((p) => [p.id, p]));
+  const linesOf = (productId: string) => lines.filter((line) => line.productId === productId);
+  // A model is fully added once each of its colors has a line (one line without colors).
+  const fullyAdded = products
+    .filter((p) => {
+      const count = linesOf(p.id).length;
+      return hasColors(p) ? count >= p.variants.filter((v) => !v.archivedAt).length : count > 0;
+    })
+    .map((p) => p.id);
+  const addLine = (product: Product, unitCost: number | null) =>
+    append({
+      productId: product.id,
+      variantKey: hasColors(product) ? "" : NO_VARIANT,
+      quantity: 1,
+      unitCost,
+    });
   const totalQty = lines.reduce((sum, line) => sum + (line.quantity ?? 0), 0);
   const totalCost = lines.reduce(
     (sum, line) => sum + (line.quantity ?? 0) * (line.unitCost ?? 0),
@@ -134,83 +151,122 @@ function ReceptionFormBody({
             const product = productById.get(field.productId);
             const line = lines[index];
             const lineError = errors.lines?.[index]?.unitCost?.message;
+            const colored = product ? hasColors(product) : false;
+            const lineName = [
+              product?.name ?? "",
+              colored && line?.variantKey ? variantLabel(product, line.variantKey) : null,
+            ]
+              .filter(Boolean)
+              .join(" · ");
+            const takenKeys = lines
+              .filter((other, i) => i !== index && other.productId === field.productId)
+              .map((other) => other.variantKey);
+            const canAddColor =
+              product !== undefined &&
+              colored &&
+              linesOf(product.id).length < product.variants.filter((v) => !v.archivedAt).length;
             return (
               <li
                 key={field.id}
-                className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-3 sm:flex-row sm:items-center sm:gap-4 sm:p-4"
+                className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-3 sm:p-4"
               >
-                <div className="flex min-w-0 flex-1 items-center gap-3">
-                  <ProductThumb
-                    name={product?.name ?? ""}
-                    color={product?.color}
-                    photoPath={product?.photos[0]?.storagePath}
-                    size={56}
-                    className="size-14 shrink-0"
-                  />
-                  <span className="min-w-0 flex-1 truncate font-semibold">{product?.name}</span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    aria-label={`${t.removeLine} — ${product?.name ?? ""}`}
-                    onClick={() => remove(index)}
-                    className="sm:order-last"
-                  >
-                    <X aria-hidden="true" />
-                  </Button>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Controller
-                    control={form.control}
-                    name={`lines.${index}.quantity`}
-                    render={({ field: quantity }) => (
-                      <QuantityStepper
-                        label={`${t.quantity} — ${product?.name ?? ""}`}
-                        value={quantity.value}
-                        onValueChange={quantity.onChange}
-                      />
-                    )}
-                  />
-                  <Controller
-                    control={form.control}
-                    name={`lines.${index}.unitCost`}
-                    render={({ field: cost }) => (
-                      <div className="w-36 flex-1 sm:flex-none">
-                        <PriceInput
-                          aria-label={`${t.unitCost} — ${product?.name ?? ""}`}
-                          placeholder={t.unitCost}
-                          value={cost.value}
-                          onValueChange={cost.onChange}
-                          aria-invalid={lineError ? true : undefined}
-                          className="h-11 text-base"
-                          hint={
-                            lineError ??
-                            (line?.unitCost != null && line.quantity > 1 ? (
-                              <Money amount={line.unitCost * line.quantity} size="sm" />
-                            ) : (
-                              t.unitCostHint
-                            ))
-                          }
-                          hintTone={lineError ? "danger" : "default"}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    <ProductThumb
+                      name={product?.name ?? ""}
+                      color={product?.color}
+                      photoPath={product?.photos[0]?.storagePath}
+                      size={56}
+                      className="size-14 shrink-0"
+                    />
+                    <span className="min-w-0 flex-1 truncate font-semibold">{lineName}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`${t.removeLine} — ${lineName}`}
+                      onClick={() => remove(index)}
+                      className="sm:order-last"
+                    >
+                      <X aria-hidden="true" />
+                    </Button>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Controller
+                      control={form.control}
+                      name={`lines.${index}.quantity`}
+                      render={({ field: quantity }) => (
+                        <QuantityStepper
+                          label={`${t.quantity} — ${lineName}`}
+                          value={quantity.value}
+                          onValueChange={quantity.onChange}
                         />
-                      </div>
-                    )}
-                  />
+                      )}
+                    />
+                    <Controller
+                      control={form.control}
+                      name={`lines.${index}.unitCost`}
+                      render={({ field: cost }) => (
+                        <div className="w-36 flex-1 sm:flex-none">
+                          <PriceInput
+                            aria-label={`${t.unitCost} — ${lineName}`}
+                            placeholder={t.unitCost}
+                            value={cost.value}
+                            onValueChange={cost.onChange}
+                            aria-invalid={lineError ? true : undefined}
+                            className="h-11 text-base"
+                            hint={
+                              lineError ??
+                              (line?.unitCost != null && line.quantity > 1 ? (
+                                <Money amount={line.unitCost * line.quantity} size="sm" />
+                              ) : (
+                                t.unitCostHint
+                              ))
+                            }
+                            hintTone={lineError ? "danger" : "default"}
+                          />
+                        </div>
+                      )}
+                    />
+                  </div>
                 </div>
+                {product && colored ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Controller
+                      control={form.control}
+                      name={`lines.${index}.variantKey`}
+                      render={({ field: variant }) => (
+                        <ColorChoice
+                          label={`${fr.variants.label} — ${product.name}`}
+                          options={colorOptions(product, undefined, "reception")}
+                          value={variant.value}
+                          onValueChange={variant.onChange}
+                          takenKeys={takenKeys}
+                          invalid={Boolean(errors.lines?.[index]?.variantKey)}
+                        />
+                      )}
+                    />
+                    {canAddColor ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => addLine(product, line?.unitCost ?? null)}
+                      >
+                        <Plus data-icon="inline-start" aria-hidden="true" />
+                        {fr.variants.addColor}
+                      </Button>
+                    ) : null}
+                  </div>
+                ) : null}
               </li>
             );
           })}
         </ul>
         <ProductPicker
           products={products}
-          selectedIds={lines.map((line) => line.productId)}
-          onSelect={(product) =>
-            append({
-              productId: product.id,
-              quantity: 1,
-              unitCost: latestCosts[product.id] ?? null,
-            })
-          }
+          selectedIds={fullyAdded}
+          onSelect={(product) => addLine(product, latestCosts[product.id] ?? null)}
           trigger={
             <Button type="button" variant="outline" className="self-start">
               <Plus data-icon="inline-start" aria-hidden="true" />

@@ -7,12 +7,17 @@ import { PRODUCT_PHOTOS_BUCKET } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
 import { isUuid } from "@/lib/uuid";
 import { refreshPublicCatalog } from "./cache";
-import { categoryNameSchema, productSchema, type ProductValues } from "./schemas";
+import {
+  assignColorsSchema,
+  categoryNameSchema,
+  productSchema,
+  type ProductValues,
+  variantColorSchema,
+} from "./schemas";
 
 function parseProduct(values: ProductValues) {
   return productSchema.safeParse({
     ...values,
-    color: values.color ?? "",
     description: values.description ?? "",
   });
 }
@@ -21,7 +26,7 @@ function toRow(values: ProductValues) {
   return {
     name: values.name,
     category_id: values.categoryId,
-    color: values.color,
+    material: values.material,
     description: values.description,
     suggested_price: values.suggestedPrice,
     reseller_price: values.resellerPrice,
@@ -220,6 +225,85 @@ export async function renameCategory(
   if (error) return { ok: false, error: toErrorCode(error) };
   if (!data?.length) return { ok: false, error: "FORBIDDEN" };
 
+  refresh();
+  return { ok: true, data: undefined };
+}
+
+/** Adds a color to a model; a color removed earlier comes back instead of being duplicated. */
+export async function addVariant(
+  shopId: string,
+  productId: string,
+  color: string,
+): Promise<ActionResult> {
+  const parsed = variantColorSchema.safeParse(color);
+  if (!parsed.success || !isUuid(shopId) || !isUuid(productId)) {
+    return { ok: false, error: "VALIDATION" };
+  }
+
+  const supabase = await createClient();
+  const { data: existing, error: readError } = await supabase
+    .from("product_variants")
+    .select("id, color, position, archived_at")
+    .eq("shop_id", shopId)
+    .eq("product_id", productId);
+  if (readError) return { ok: false, error: toErrorCode(readError) };
+
+  const same = existing?.find((v) => v.color.toLowerCase() === parsed.data.toLowerCase());
+  if (same && !same.archived_at) return { ok: false, error: "DUPLICATE" };
+
+  const { error } = same
+    ? await supabase.from("product_variants").update({ archived_at: null }).eq("id", same.id)
+    : await supabase.from("product_variants").insert({
+        shop_id: shopId,
+        product_id: productId,
+        color: parsed.data,
+        position: Math.max(-1, ...(existing ?? []).map((v) => v.position)) + 1,
+      });
+  if (error) return { ok: false, error: toErrorCode(error) };
+
+  await refreshPublicCatalog(shopId);
+  refresh();
+  return { ok: true, data: undefined };
+}
+
+/** Removes a color from new receptions (archived: its history and remaining stock stay). */
+export async function archiveVariant(shopId: string, variantId: string): Promise<ActionResult> {
+  if (!isUuid(shopId) || !isUuid(variantId)) return { ok: false, error: "VALIDATION" };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("product_variants")
+    .update({ archived_at: new Date().toISOString() })
+    .eq("shop_id", shopId)
+    .eq("id", variantId)
+    .select("id");
+  if (error) return { ok: false, error: toErrorCode(error) };
+  if (!data?.length) return { ok: false, error: "FORBIDDEN" };
+
+  await refreshPublicCatalog(shopId);
+  refresh();
+  return { ok: true, data: undefined };
+}
+
+/** Spreads the uncolored stock of a model over its colors (RPC assign_stock_colors). */
+export async function assignStockColors(
+  shopId: string,
+  productId: string,
+  items: { variantId: string; quantity: number }[],
+): Promise<ActionResult> {
+  const parsed = assignColorsSchema.safeParse(items);
+  if (!parsed.success || !isUuid(shopId) || !isUuid(productId)) {
+    return { ok: false, error: "VALIDATION" };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("assign_stock_colors", {
+    p_product_id: productId,
+    p_items: parsed.data.map((item) => ({ variant_id: item.variantId, quantity: item.quantity })),
+  });
+  if (error) return { ok: false, error: toErrorCode(error) };
+
+  await refreshPublicCatalog(shopId);
   refresh();
   return { ok: true, data: undefined };
 }

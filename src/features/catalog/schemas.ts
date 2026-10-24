@@ -4,14 +4,12 @@ import { fr } from "@/messages/fr";
 
 const amount = z.number().int().min(0).max(MAX_AMOUNT).nullable();
 
+export const MATERIALS = ["leather", "faux_leather", "canvas", "other"] as const;
+
 export const productSchema = z.object({
   name: z.string().trim().min(1, { error: fr.validation.required }).max(100),
   categoryId: z.uuid().nullable(),
-  color: z
-    .string()
-    .trim()
-    .max(40)
-    .transform((value) => (value === "" ? null : value)),
+  material: z.enum(MATERIALS).nullable(),
   description: z
     .string()
     .trim()
@@ -26,3 +24,10 @@ export type ProductInput = z.input<typeof productSchema>;
 export type ProductValues = z.output<typeof productSchema>;
 
 export const categoryNameSchema = z.string().trim().min(1).max(60);
+
+export const variantColorSchema = z.string().trim().min(1).max(40);
+
+export const assignColorsSchema = z
+  .array(z.object({ variantId: z.uuid(), quantity: z.number().int().min(1).max(10000) }))
+  .min(1)
+  .max(50);

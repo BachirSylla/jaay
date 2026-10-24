@@ -4,6 +4,8 @@ import { fr } from "@/messages/fr";
 
 export const receptionLineSchema = z.object({
   productId: z.uuid(),
+  /** Color key (variant id, or NO_VARIANT for a model without colors); "" = not chosen. */
+  variantKey: z.string().min(1, { error: fr.variants.choose }),
   quantity: z.number().int().min(1).max(10_000),
   unitCost: z
     .number({ error: fr.receptions.missingCost })

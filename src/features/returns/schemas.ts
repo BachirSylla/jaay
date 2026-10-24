@@ -7,7 +7,14 @@ export const returnSchema = z.object({
   returnedAt: z.iso.date(),
   /** Lines with 0 are kept in stock (not sent). */
   lines: z
-    .array(z.object({ productId: z.uuid(), quantity: z.number().int().min(0).max(10_000) }))
+    .array(
+      z.object({
+        productId: z.uuid(),
+        /** Color key (variant id, or NO_VARIANT). */
+        variantKey: z.string().min(1),
+        quantity: z.number().int().min(0).max(10_000),
+      }),
+    )
     .refine((lines) => lines.some((line) => line.quantity > 0), {
       error: fr.returns.nothingToReturn,
     }),

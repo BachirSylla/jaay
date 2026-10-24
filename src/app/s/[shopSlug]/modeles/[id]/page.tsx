@@ -8,10 +8,11 @@ import { ShareLinkButton } from "@/components/shared/ShareLinkButton";
 import { PhotoManager } from "@/features/catalog/components/PhotoManager";
 import { ProductActions } from "@/features/catalog/components/ProductActions";
 import { ProductForm } from "@/features/catalog/components/ProductForm";
+import { VariantsManager } from "@/features/catalog/components/VariantsManager";
 import { publicProductUrl } from "@/features/catalog/public-links";
 import { getProduct, listCategories } from "@/features/catalog/queries";
 import { requireShop } from "@/features/shop/require";
-import { getStock } from "@/features/stock/queries";
+import { getStock, getVariantStock } from "@/features/stock/queries";
 import { formatQty } from "@/lib/format";
 import { can } from "@/lib/permissions";
 import { isUuid } from "@/lib/uuid";
@@ -32,10 +33,11 @@ export default function ProductPage({ params }: PageProps<"/s/[shopSlug]/modeles
 async function ProductDetail({ params }: { params: Promise<{ shopSlug: string; id: string }> }) {
   const { shop, role } = await requireShop(params);
   const { id } = await params;
-  const [product, categories, stock] = await Promise.all([
+  const [product, categories, stock, variantStock] = await Promise.all([
     isUuid(id) ? getProduct(shop.id, id) : null,
     listCategories(shop.id),
     getStock(shop.id),
+    getVariantStock(shop.id),
   ]);
   if (!product) notFound();
   const canManage = can(role, "manageCatalog");
@@ -47,7 +49,9 @@ async function ProductDetail({ params }: { params: Promise<{ shopSlug: string; i
         eyebrow={
           product.archivedAt
             ? fr.common.archived
-            : [product.categoryName, product.color].filter(Boolean).join(" · ") || undefined
+            : [product.categoryName, product.material ? t.materials[product.material] : null]
+                .filter(Boolean)
+                .join(" · ") || undefined
         }
         title={product.name}
         description={
@@ -73,6 +77,12 @@ async function ProductDetail({ params }: { params: Promise<{ shopSlug: string; i
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-lg">{t.photos}</h2>
           <PhotoManager product={product} editable={canManage} />
+          <h2 className="mt-4 text-lg">{fr.variants.title}</h2>
+          <VariantsManager
+            product={product}
+            stock={variantStock[product.id] ?? {}}
+            editable={canManage && !product.archivedAt}
+          />
         </section>
 
         <section className="min-w-0 rounded-2xl border border-line bg-surface p-5 sm:p-6">

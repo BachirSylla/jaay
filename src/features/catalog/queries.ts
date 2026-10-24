@@ -1,18 +1,20 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
-import type { Category, Product } from "./types";
+import type { Category, Material, Product } from "./types";
 
 const PRODUCT_COLUMNS = `
-  id, name, color, description, category_id, suggested_price, reseller_price,
+  id, name, color, material, description, category_id, suggested_price, reseller_price,
   low_stock_threshold, is_public, archived_at,
   category:categories (name),
-  photos:product_photos (id, storage_path, position)
+  photos:product_photos (id, storage_path, position),
+  variants:product_variants (id, color, position, archived_at)
 `;
 
 type ProductRow = {
   id: string;
   name: string;
   color: string | null;
+  material: Material | null;
   description: string | null;
   category_id: string | null;
   suggested_price: number | null;
@@ -22,13 +24,19 @@ type ProductRow = {
   archived_at: string | null;
   category: { name: string } | null;
   photos: { id: string; storage_path: string; position: number }[];
+  variants: { id: string; color: string; position: number; archived_at: string | null }[];
 };
 
 function toProduct(row: ProductRow): Product {
+  const variants = [...row.variants]
+    .sort((a, b) => a.position - b.position || a.color.localeCompare(b.color))
+    .map((v) => ({ id: v.id, color: v.color, position: v.position, archivedAt: v.archived_at }));
   return {
     id: row.id,
     name: row.name,
-    color: row.color,
+    color: variants.find((v) => !v.archivedAt)?.color ?? row.color,
+    material: row.material,
+    variants,
     description: row.description,
     categoryId: row.category_id,
     categoryName: row.category?.name ?? null,

@@ -5,7 +5,6 @@ import { type ComponentProps, useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { cn } from "cn";
 import { Field, fieldAria } from "@/components/shared/Field";
 import { PriceInput } from "@/components/shared/PriceInput";
 import { Button } from "@/components/ui/button";
@@ -20,22 +19,22 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useShop } from "@/features/shop/shop-context";
-import { BAG_COLORS } from "@/lib/bag-colors";
 import { errorMessage } from "@/lib/errors";
 import { useFreshFormKey } from "@/lib/use-fresh-form-key";
 import { fr } from "@/messages/fr";
 import { createProduct, updateProduct } from "../actions";
-import { productSchema, type ProductInput, type ProductValues } from "../schemas";
+import { MATERIALS, productSchema, type ProductInput, type ProductValues } from "../schemas";
 import type { Category, Product } from "../types";
 
 const t = fr.catalog;
 const NO_CATEGORY = "none";
+const NO_MATERIAL = "none";
 
 function defaults(product?: Product): ProductInput {
   return {
     name: product?.name ?? "",
     categoryId: product?.categoryId ?? null,
-    color: product?.color ?? "",
+    material: product?.material ?? null,
     description: product?.description ?? "",
     suggestedPrice: product?.suggestedPrice ?? null,
     resellerPrice: product?.resellerPrice ?? null,
@@ -121,24 +120,35 @@ function ProductFormBody({
           />
         </Field>
 
-        <Field label={t.color} htmlFor="product-color" optional={fr.common.optional}>
-          <Input id="product-color" placeholder={t.colorPlaceholder} {...form.register("color")} />
-          <div className="flex flex-wrap gap-1.5" role="group" aria-label={t.color}>
-            {BAG_COLORS.map((color) => (
-              <button
-                key={color.key}
-                type="button"
-                onClick={() => form.setValue("color", color.label, { shouldDirty: true })}
-                className="inline-flex h-9 items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 text-[13px] font-medium hover:bg-surface-muted"
+        <Field label={t.material} htmlFor="product-material" optional={fr.common.optional}>
+          <Controller
+            control={form.control}
+            name="material"
+            render={({ field }) => (
+              <Select
+                value={field.value ?? NO_MATERIAL}
+                onValueChange={(value) =>
+                  field.onChange(
+                    value === NO_MATERIAL ? null : (value as (typeof MATERIALS)[number]),
+                  )
+                }
               >
-                <span
-                  aria-hidden="true"
-                  className={cn("size-3.5 rounded-full ring-1 ring-ink/10", color.className)}
-                />
-                {color.label}
-              </button>
-            ))}
-          </div>
+                <SelectTrigger id="product-material" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_MATERIAL} className="min-h-10">
+                    {t.materialNone}
+                  </SelectItem>
+                  {MATERIALS.map((material) => (
+                    <SelectItem key={material} value={material} className="min-h-10">
+                      {t.materials[material]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
         </Field>
       </div>
 

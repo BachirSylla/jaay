@@ -10,6 +10,8 @@ export type SaleLine = {
   productId: string;
   productName: string;
   productColor: string | null;
+  /** Color sold (null: model without colors or stock recorded without color). */
+  colorName: string | null;
   photoPath: string | null;
   quantity: number;
   unitPrice: number;

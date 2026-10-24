@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { useCan, useShop } from "@/features/shop/shop-context";
 import { formatQty } from "@/lib/format";
 import { fr } from "@/messages/fr";
-import type { Category, Product, ProductStock } from "../types";
+import type { Category, Material, Product, ProductStock } from "../types";
+import { colorOptions, hasColors, type VariantStock } from "../variants";
 import { ProductCard } from "./ProductCard";
 
 const t = fr.catalog;
@@ -24,17 +25,21 @@ export function ProductGrid({
   categories,
   emptyAction,
   stock,
+  variantStock,
 }: {
   products: Product[];
   categories: Category[];
   emptyAction?: ReactNode;
   /** Available quantity per product id (from get_stock), when known. */
   stock?: Record<string, ProductStock>;
+  /** Bags per product and color, to show the stock of each color. */
+  variantStock?: VariantStock;
 }) {
   const { shop } = useShop();
   const canManage = useCan("manageCatalog");
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<string>(ALL);
+  const [material, setMaterial] = useState<string>(ALL);
   const [showArchived, setShowArchived] = useState(false);
   const deferredQuery = useDeferredValue(query);
 
@@ -42,6 +47,7 @@ export function ProductGrid({
   const archivedCount = products.filter((p) => p.archivedAt).length;
   const visible = pool.filter(
     (p) =>
+      (material === ALL || p.material === material) &&
       (category === ALL ||
         (category === LOW
           ? Boolean(stock?.[p.id]?.isLow)
@@ -49,8 +55,23 @@ export function ProductGrid({
             ? !p.categoryId
             : p.categoryId === category)) &&
       (!deferredQuery ||
-        matchesSearch(`${p.name} ${p.color ?? ""} ${p.categoryName ?? ""}`, deferredQuery)),
+        matchesSearch(
+          `${p.name} ${p.variants.map((v) => v.color).join(" ")} ${p.color ?? ""} ${p.categoryName ?? ""} ${p.material ? t.materials[p.material] : ""}`,
+          deferredQuery,
+        )),
   );
+
+  const materials = (Object.keys(t.materials) as Material[])
+    .map((value) => ({
+      value: value as string,
+      label: t.materials[value],
+      count: pool.filter((p) => p.material === value).length,
+    }))
+    .filter((chip) => chip.count > 0);
+  const materialChips =
+    materials.length > 0
+      ? [{ value: ALL, label: fr.common.all, count: pool.length }, ...materials]
+      : [];
 
   const chips = [
     { value: ALL, label: fr.common.all, count: pool.length },
@@ -93,6 +114,14 @@ export function ProductGrid({
           value={category}
           onValueChange={setCategory}
         />
+        {materialChips.length > 0 ? (
+          <ChipGroup
+            aria-label={t.materialFilterLabel}
+            chips={materialChips}
+            value={material}
+            onValueChange={setMaterial}
+          />
+        ) : null}
         {canManage && archivedCount > 0 ? (
           <Button variant="ghost" size="sm" onClick={() => setShowArchived((value) => !value)}>
             {showArchived ? fr.common.hideArchived : `${fr.common.showArchived} (${archivedCount})`}
@@ -119,6 +148,11 @@ export function ProductGrid({
                   ) : undefined
                 }
                 badge={stock?.[product.id]?.isLow ? <StockBadge label={t.lowStock} /> : undefined}
+                colors={
+                  variantStock && hasColors(product)
+                    ? colorOptions(product, variantStock[product.id], "stock")
+                    : undefined
+                }
               />
             </li>
           ))}

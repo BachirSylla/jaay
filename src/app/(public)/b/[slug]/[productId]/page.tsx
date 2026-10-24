@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { ArrowLeft, MessageCircle } from "lucide-react";
+import { ColorDot } from "@/components/shared/ColorDot";
 import { Money } from "@/components/shared/Money";
 import { ProductThumb } from "@/components/shared/ProductThumb";
 import { ShareLinkButton } from "@/components/shared/ShareLinkButton";
@@ -105,10 +106,30 @@ async function ProductView({ params }: { params: Promise<{ slug: string; product
                 </span>
               ) : null}
               <h1 className="text-[32px] leading-tight">{product.name}</h1>
-              {product.color ? (
-                <span className="text-muted-foreground">{product.color}</span>
+              {product.material ? (
+                <span className="text-muted-foreground">
+                  {fr.catalog.materials[product.material]}
+                </span>
               ) : null}
             </div>
+            {product.colors.length > 0 ? (
+              <div className="flex flex-col gap-1.5">
+                <span className="text-sm font-medium text-muted-foreground">
+                  {fr.variants.available}
+                </span>
+                <ul className="flex flex-wrap gap-2">
+                  {product.colors.map((color) => (
+                    <li
+                      key={color}
+                      className="inline-flex h-9 items-center gap-1.5 rounded-full border border-line bg-surface px-3 text-sm font-medium"
+                    >
+                      <ColorDot color={color} />
+                      {color}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
             {product.price !== null ? (
               <Money amount={product.price} size="hero" />
             ) : (

@@ -1,3 +1,4 @@
+import { ColorDot } from "@/components/shared/ColorDot";
 import { Money } from "@/components/shared/Money";
 import { ProductThumb } from "@/components/shared/ProductThumb";
 import { formatQty } from "@/lib/format";
@@ -28,7 +29,17 @@ export function ReceptionLines({ lines }: { lines: ReceptionLine[] }) {
                 className="size-14 shrink-0"
               />
               <div className="flex min-w-0 flex-1 flex-col">
-                <span className="truncate font-semibold">{line.productName}</span>
+                <span className="flex min-w-0 items-center gap-1.5 font-semibold">
+                  <span className="truncate">{line.productName}</span>
+                  {line.colorName ? (
+                    <>
+                      <ColorDot color={line.colorName} />
+                      <span className="shrink-0 text-sm font-medium text-muted-foreground">
+                        {line.colorName}
+                      </span>
+                    </>
+                  ) : null}
+                </span>
                 <span className="text-sm text-muted-foreground">
                   {formatQty(line.qtyReceived)}
                   {line.unitCost !== null ? (

@@ -37,6 +37,13 @@ export async function getReceptionLines(receptionId: string): Promise<ReceptionL
   if (productsError) throw productsError;
   const byId = new Map((products ?? []).map((product) => [product.id, product]));
 
+  const variantIds = [...new Set(lines.map((line) => line.variant_id).filter(Boolean))];
+  const { data: variants, error: variantsError } = variantIds.length
+    ? await supabase.from("product_variants").select("id, color").in("id", variantIds)
+    : { data: [], error: null };
+  if (variantsError) throw variantsError;
+  const colorById = new Map((variants ?? []).map((variant) => [variant.id, variant.color]));
+
   return lines.map((line) => {
     const product = byId.get(line.product_id);
     const cover = [...(product?.photos ?? [])].sort((a, b) => a.position - b.position)[0];
@@ -44,7 +51,8 @@ export async function getReceptionLines(receptionId: string): Promise<ReceptionL
       lotId: line.lot_id,
       productId: line.product_id,
       productName: product?.name ?? "",
-      productColor: product?.color ?? null,
+      productColor: colorById.get(line.variant_id) ?? product?.color ?? null,
+      colorName: colorById.get(line.variant_id) ?? null,
       photoPath: cover?.storage_path ?? null,
       qtyReceived: line.qty_received,
       qtySold: line.qty_sold,

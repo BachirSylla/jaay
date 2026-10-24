@@ -7,6 +7,7 @@ import { cn } from "cn";
 import { ChipGroup } from "@/components/shared/ChipGroup";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Money } from "@/components/shared/Money";
+import { ColorDot } from "@/components/shared/ColorDot";
 import { ProductThumb } from "@/components/shared/ProductThumb";
 import { buttonVariants } from "@/components/ui/button";
 import { fr } from "@/messages/fr";
@@ -57,6 +58,13 @@ export function PublicProductGrid({ catalog }: { catalog: PublicCatalog }) {
               />
               <span className="flex min-w-0 flex-col gap-0.5 px-1">
                 <span className="truncate font-semibold">{product.name}</span>
+                {product.colors.length > 0 ? (
+                  <span className="flex items-center gap-1" aria-label={product.colors.join(", ")}>
+                    {product.colors.map((color) => (
+                      <ColorDot key={color} color={color} />
+                    ))}
+                  </span>
+                ) : null}
                 {product.price !== null ? (
                   <Money amount={product.price} size="md" />
                 ) : (

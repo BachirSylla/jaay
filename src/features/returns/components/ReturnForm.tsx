@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import type { Product } from "@/features/catalog/types";
+import { NO_VARIANT, variantLabel } from "@/features/catalog/variants";
 import { useShop } from "@/features/shop/shop-context";
 import type { Supplier } from "@/features/suppliers/types";
 import { errorMessage } from "@/lib/errors";
@@ -34,10 +35,10 @@ import type { SupplierStock } from "../types";
 const t = fr.returns;
 
 function linesFor(supplierId: string, stock: SupplierStock) {
-  return Object.entries(stock[supplierId] ?? {}).map(([productId, available]) => ({
-    productId,
-    quantity: available,
-  }));
+  return Object.entries(stock[supplierId] ?? {}).map(([key, available]) => {
+    const [productId, variantKey] = key.split(":");
+    return { productId, variantKey, quantity: available };
+  });
 }
 
 /** Return of unsold bags: quantities pre-filled with what is left from the supplier. */
@@ -148,7 +149,16 @@ function ReturnFormBody({
             <ul className="flex flex-col gap-3">
               {fields.map((field, index) => {
                 const product = productById.get(field.productId);
-                const available = stock[supplierId]?.[field.productId] ?? 0;
+                const available =
+                  stock[supplierId]?.[`${field.productId}:${field.variantKey}`] ?? 0;
+                const lineName = [
+                  product?.name ?? "",
+                  field.variantKey !== NO_VARIANT || (product?.variants.length ?? 0) > 0
+                    ? variantLabel(product, field.variantKey)
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ");
                 return (
                   <li
                     key={field.id}
@@ -162,7 +172,7 @@ function ReturnFormBody({
                       className="size-14 shrink-0"
                     />
                     <div className="flex min-w-0 flex-1 flex-col">
-                      <span className="truncate font-semibold">{product?.name}</span>
+                      <span className="truncate font-semibold">{lineName}</span>
                       <span className="text-[13px] text-muted-foreground">
                         {fill(t.available, { n: available })}
                       </span>
@@ -172,7 +182,7 @@ function ReturnFormBody({
                       name={`lines.${index}.quantity`}
                       render={({ field: quantity }) => (
                         <QuantityStepper
-                          label={`${t.quantity} — ${product?.name ?? ""}`}
+                          label={`${t.quantity} — ${lineName}`}
                           value={quantity.value}
                           min={0}
                           max={available}

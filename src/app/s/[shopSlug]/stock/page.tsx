@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ProductGrid } from "@/features/catalog/components/ProductGrid";
 import { listCategories, listProducts } from "@/features/catalog/queries";
 import { requireShop } from "@/features/shop/require";
-import { getStock } from "@/features/stock/queries";
+import { getStock, getVariantStock } from "@/features/stock/queries";
 import { formatQty } from "@/lib/format";
 import { fill } from "@/lib/i18n";
 import { catalogUrl } from "@/lib/site";
@@ -28,10 +28,11 @@ export default function StockPage({ params }: PageProps<"/s/[shopSlug]/stock">) 
 
 async function Stock({ params }: { params: Promise<{ shopSlug: string }> }) {
   const { shop, role } = await requireShop(params);
-  const [products, categories, stock] = await Promise.all([
+  const [products, categories, stock, variantStock] = await Promise.all([
     listProducts(shop.id),
     listCategories(shop.id),
     getStock(shop.id),
+    getVariantStock(shop.id),
   ]);
   const canManage = can(role, "manageCatalog");
   const active = products.filter((p) => !p.archivedAt);
@@ -76,6 +77,7 @@ async function Stock({ params }: { params: Promise<{ shopSlug: string }> }) {
         products={products}
         categories={categories}
         stock={stock}
+        variantStock={variantStock}
         emptyAction={addButton}
       />
     </>

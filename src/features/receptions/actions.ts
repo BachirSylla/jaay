@@ -1,6 +1,7 @@
 "use server";
 
 import { refresh } from "next/cache";
+import { variantIdOf } from "@/features/catalog/variants";
 import { type ActionResult, toErrorCode } from "@/lib/errors";
 import { businessDateToTimestamp } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
@@ -22,6 +23,7 @@ export async function createReception(
     p_received_at: businessDateToTimestamp(receivedAt),
     p_items: lines.map((line) => ({
       product_id: line.productId,
+      variant_id: variantIdOf(line.variantKey),
       quantity: line.quantity,
       unit_cost: line.unitCost,
     })),

@@ -11,7 +11,7 @@ import { listCustomers } from "@/features/customers/queries";
 import { NewSaleForm } from "@/features/sales/components/NewSaleForm";
 import { getFifoLots, getNextSaleNumber } from "@/features/sales/queries";
 import { requireShop } from "@/features/shop/require";
-import { getStock } from "@/features/stock/queries";
+import { getStock, getVariantStock } from "@/features/stock/queries";
 import { can } from "@/lib/permissions";
 import { fr } from "@/messages/fr";
 
@@ -30,9 +30,10 @@ export default function NewSalePage({ params }: PageProps<"/s/[shopSlug]/ventes/
 async function NewSale({ params }: { params: Promise<{ shopSlug: string }> }) {
   const { shop, role } = await requireShop(params);
   const finance = can(role, "viewCosts");
-  const [products, stock, customers, nextNumber, fifoLots] = await Promise.all([
+  const [products, stock, variantStock, customers, nextNumber, fifoLots] = await Promise.all([
     listProducts(shop.id),
     getStock(shop.id),
+    getVariantStock(shop.id),
     listCustomers(shop.id),
     getNextSaleNumber(shop.id),
     // Costs never reach a manager's browser.
@@ -64,6 +65,7 @@ async function NewSale({ params }: { params: Promise<{ shopSlug: string }> }) {
       nextNumber={nextNumber}
       products={active}
       stock={stock}
+      variantStock={variantStock}
       customers={customers}
       fifoLots={fifoLots}
       showMargin={finance}

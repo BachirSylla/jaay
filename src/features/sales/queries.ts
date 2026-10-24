@@ -1,4 +1,5 @@
 import "server-only";
+import { variantKey } from "@/features/catalog/variants";
 import type { FifoLot } from "@/lib/fifo";
 import { createClient } from "@/lib/supabase/server";
 import type { Sale } from "./types";
@@ -12,6 +13,7 @@ const SALE_COLUMNS = `
   items:sale_items (
     id, product_id, quantity, unit_price, line_total,
     product:products (name, color, photos:product_photos (storage_path, position)),
+    variant:product_variants (color),
     allocations:sale_item_allocations (quantity, unit_cost)
   ),
   payments:sale_payments (method, amount)
@@ -41,6 +43,7 @@ type SaleRow = {
       color: string | null;
       photos: { storage_path: string; position: number }[];
     } | null;
+    variant: { color: string } | null;
     allocations: { quantity: number; unit_cost: number }[];
   }[];
   payments: { method: Sale["payments"][number]["method"]; amount: number }[];
@@ -53,8 +56,9 @@ function toSale(row: SaleRow, withCosts: boolean): Sale {
     return {
       id: item.id,
       productId: item.product_id,
-      productName: item.product?.name ?? "",
-      productColor: item.product?.color ?? null,
+      productName: [item.product?.name ?? "", item.variant?.color].filter(Boolean).join(" · "),
+      productColor: item.variant?.color ?? item.product?.color ?? null,
+      colorName: item.variant?.color ?? null,
       photoPath: cover?.storage_path ?? null,
       quantity: item.quantity,
       unitPrice: item.unit_price,
@@ -139,14 +143,17 @@ export async function getNextSaleNumber(shopId: string): Promise<number> {
 }
 
 /**
- * Available lots per product in FIFO order, to estimate the margin while selling.
+ * Available lots per model and color (key `${productId}:${variantKey}`) in FIFO order, to
+ * estimate the margin while selling.
  * Owner/admin only (lots are not readable by managers: the result is then empty).
  */
 export async function getFifoLots(shopId: string): Promise<Record<string, FifoLot[]>> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("lots")
-    .select("product_id, qty_available, unit_cost, received_at, id, reception:receptions (status)")
+    .select(
+      "product_id, variant_id, qty_available, unit_cost, received_at, id, reception:receptions (status)",
+    )
     .eq("shop_id", shopId)
     .gt("qty_available", 0)
     .order("received_at")
@@ -155,7 +162,7 @@ export async function getFifoLots(shopId: string): Promise<Record<string, FifoLo
   const lots: Record<string, FifoLot[]> = {};
   for (const lot of data ?? []) {
     if (lot.reception?.status !== "active") continue;
-    (lots[lot.product_id] ??= []).push({
+    (lots[`${lot.product_id}:${variantKey(lot.variant_id)}`] ??= []).push({
       available: lot.qty_available ?? 0,
       unitCost: lot.unit_cost,
     });

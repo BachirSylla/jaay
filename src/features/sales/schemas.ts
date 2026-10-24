@@ -17,6 +17,8 @@ const amount = z.number().int().min(0).max(MAX_AMOUNT);
 
 export const saleLineSchema = z.object({
   productId: z.uuid(),
+  /** Color key (variant id, or NO_VARIANT for the stock without color); "" = not chosen. */
+  variantKey: z.string().min(1, { error: fr.variants.choose }),
   quantity: z.number().int().min(1).max(1000),
   unitPrice: amount.nullable().refine((value) => value !== null, { error: fr.validation.required }),
 });

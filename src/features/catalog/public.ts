@@ -2,11 +2,16 @@ import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 import { createPublicClient } from "@/lib/supabase/public";
 import { catalogTag } from "./cache";
+import type { Material } from "./types";
 
 export type PublicProduct = {
   id: string;
   name: string;
+  /** Thumbnail color: first color in stock, else the former free-text color. */
   color: string | null;
+  /** Colors still in stock. */
+  colors: string[];
+  material: Material | null;
   description: string | null;
   category: string | null;
   /** null: "price on request" (or no suggested price). */
@@ -57,6 +62,11 @@ export async function getPublicCatalog(slug: string): Promise<PublicCatalog | nu
       whatsappPhone: raw.shop.whatsapp_phone,
       showPrices: raw.shop.show_prices,
     },
-    products: raw.products,
+    products: raw.products.map((product) => ({
+      ...product,
+      colors: product.colors ?? [],
+      material: product.material ?? null,
+      color: product.colors?.[0] ?? product.color,
+    })),
   };
 }
