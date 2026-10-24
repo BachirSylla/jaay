@@ -49,7 +49,11 @@ test("owner sells two bags in a few taps", async ({ page }) => {
 
   // Back to the form without reloading (the screen stayed mounted, hidden): it opens empty,
   // with the next number and without the success overlay.
-  await page.getByRole("link", { name: "Nouvelle vente" }).filter({ visible: true }).first().click();
+  await page
+    .getByRole("link", { name: "Nouvelle vente" })
+    .filter({ visible: true })
+    .first()
+    .click();
   await expect(page).toHaveURL(new RegExp(`/s/${slug}/ventes/nouvelle$`));
   await expect(page.getByText("n° 2").filter({ visible: true })).toBeVisible();
   await expect(

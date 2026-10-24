@@ -92,7 +92,8 @@ test("owner creates a product with a compressed photo", async ({ page }) => {
   await page.getByRole("link", { name: "Nouveau modèle" }).first().click();
 
   await page.getByLabel("Nom du modèle").fill("Cabas cuir grainé");
-  await page.getByRole("button", { name: "Marron" }).click();
+  await page.getByLabel(/Matière/).click();
+  await page.getByRole("option", { name: "Cuir", exact: true }).click();
   await page.getByLabel(/Prix de vente conseillé/).fill("8000");
   await page.getByLabel(/Prix revendeur conseillé/).fill("7000");
   await page.getByRole("button", { name: "Nouveau modèle" }).click();
@@ -109,8 +110,16 @@ test("owner creates a product with a compressed photo", async ({ page }) => {
   const photo = page.getByRole("img", { name: "Cabas cuir grainé" }).first();
   await expect(photo).toHaveAttribute("src", /product-photos/);
 
+  // Colors are managed on the model page.
+  await page.getByRole("button", { name: "Marron" }).click();
+  await expect(page.getByText("Couleur ajoutée.")).toBeVisible();
+  await page.getByLabel("Autre couleur").fill("Bordeaux");
+  await page.getByRole("button", { name: "Ajouter", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Retirer la couleur — Bordeaux" })).toBeVisible();
+
   await page.goto(`/s/${slug}/stock`);
   await expect(page.getByRole("link", { name: /Cabas cuir grainé/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Cabas cuir grainé/ })).toContainText("Cuir");
   await expect(page.getByLabel("8 000 F").first()).toBeVisible();
 });
 

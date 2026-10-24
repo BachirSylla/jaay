@@ -34,7 +34,9 @@ test.beforeAll(async () => {
 
 test("a user updates their profile and password", async ({ page }) => {
   await signIn(page, ownerEmail);
-  await page.getByRole("link", { name: "Mon profil" }).click();
+  // Keyboard: in dev, Next's overlay sits over the bottom of the sidebar and swallows clicks.
+  await page.getByRole("link", { name: "Mon profil" }).focus();
+  await page.keyboard.press("Enter");
   await expect(page.getByRole("heading", { level: 1, name: "Mon profil" })).toBeVisible();
   await page.waitForLoadState("networkidle");
 
