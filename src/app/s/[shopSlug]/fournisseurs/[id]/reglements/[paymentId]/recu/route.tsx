@@ -26,7 +26,7 @@ const BAG_HEX: Record<string, string> = {
 /**
  * Receipt of a supplier payment as a PNG, to share on WhatsApp: the sold bags it pays for, at
  * supplier price, with their photo so the supplier recognizes them, any advance, and the
- * account after it. Never shows sale prices.
+ * total. Never shows sale prices nor the account.
  * Owner/admin only, like the payments themselves.
  */
 export async function GET(
@@ -44,9 +44,8 @@ export async function GET(
   const photos = await Promise.all(
     receipt.lines.map((line) => previewUrl(line.photoPath ?? undefined)),
   );
-  const remaining = receipt.soldTotal - receipt.paidTotal;
   const rows = receipt.lines.length + (receipt.advance > 0 ? 1 : 0);
-  const height = 1080 + Math.max(1, rows) * (PHOTO + 32) + (receipt.payment.note ? 48 : 0);
+  const height = 860 + Math.max(1, rows) * (PHOTO + 32) + (receipt.payment.note ? 48 : 0);
 
   return new ImageResponse(
     <div
@@ -167,42 +166,12 @@ export async function GET(
           </div>
         ) : null}
 
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 14,
-            marginTop: 16,
-            padding: "32px 36px",
-            borderRadius: 32,
-            background: "#FFFFFF",
-            border: "2px solid #E3E0DA",
-          }}
-        >
-          <span style={{ fontSize: 30, fontWeight: 700 }}>{t.situation}</span>
-          <div style={{ display: "flex", justifyContent: "space-between", color: "#6B655E" }}>
-            <span>{t.soldTotal}</span>
-            <span>{formatMoney(receipt.soldTotal)}</span>
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between", color: "#6B655E" }}>
-            <span>{t.paidTotal}</span>
-            <span>{formatMoney(receipt.paidTotal)}</span>
-          </div>
-          <div style={{ display: "flex", height: 2, background: "#E3E0DA", margin: "6px 0" }} />
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-            <span style={{ fontSize: 36, fontWeight: 700 }}>
-              {remaining >= 0 ? t.remaining : t.advanceTotal}
-            </span>
-            <span
-              style={{
-                fontSize: 52,
-                fontWeight: 700,
-                color: remaining > 0 ? "#A85A24" : "#17694F",
-              }}
-            >
-              {formatMoney(Math.abs(remaining))}
-            </span>
-          </div>
+        <div style={{ display: "flex", height: 2, background: "#E3E0DA", margin: "8px 0" }} />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+          <span style={{ fontSize: 36, fontWeight: 700 }}>{t.total}</span>
+          <span style={{ fontSize: 60, fontWeight: 700, color: "#A85A24" }}>
+            {formatMoney(receipt.payment.amount)}
+          </span>
         </div>
       </div>
 

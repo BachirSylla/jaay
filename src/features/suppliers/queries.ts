@@ -221,9 +221,6 @@ export type PaymentReceipt = {
   lines: PaymentReceiptLine[];
   /** Part of the payment not tied to bags. */
   advance: number;
-  /** At the payment date: bags sold at supplier price, total paid (this one included). */
-  soldTotal: number;
-  paidTotal: number;
 };
 
 /** Data of a supplier payment receipt (owner/admin only: RLS). */
@@ -233,7 +230,7 @@ export async function getPaymentReceipt(
   paymentId: string,
 ): Promise<PaymentReceipt | null> {
   const supabase = await createClient();
-  const [supplier, payments, items, sold] = await Promise.all([
+  const [supplier, payments, items] = await Promise.all([
     getSupplier(shopId, supplierId),
     listSupplierPayments(shopId, supplierId),
     supabase
@@ -241,14 +238,8 @@ export async function getPaymentReceipt(
       .select(`quantity, amount, allocation:sale_item_allocations (${ALLOCATION_COLUMNS})`)
       .eq("shop_id", shopId)
       .eq("payment_id", paymentId),
-    supabase
-      .from("sale_item_allocations")
-      .select("quantity, unit_cost, item:sale_items (sale:sales (sold_at, status))")
-      .eq("shop_id", shopId)
-      .eq("supplier_id", supplierId),
   ]);
   if (items.error) throw items.error;
-  if (sold.error) throw sold.error;
   const payment = payments.find((p) => p.id === paymentId && p.status === "active");
   if (!supplier || !payment) return null;
 
@@ -273,19 +264,10 @@ export async function getPaymentReceipt(
   }
   const covered = [...lines.values()].reduce((sum, line) => sum + line.amount, 0);
 
-  const soldTotal = (sold.data ?? [])
-    .filter((row) => row.item?.sale?.status === "active" && row.item.sale.sold_at <= payment.paidAt)
-    .reduce((sum, row) => sum + row.quantity * row.unit_cost, 0);
-  const paidTotal = payments
-    .filter((p) => p.status === "active" && p.paidAt <= payment.paidAt)
-    .reduce((sum, p) => sum + p.amount, 0);
-
   return {
     supplier,
     payment,
     lines: [...lines.values()],
     advance: payment.amount - covered,
-    soldTotal,
-    paidTotal,
   };
 }
