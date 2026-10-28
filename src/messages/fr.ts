@@ -634,6 +634,16 @@ export const fr = {
     cancelReason: "Motif de l'annulation",
     cancelledToast: "Règlement annulé.",
     cancelled: "Annulé",
+    stockSheet: {
+      share: "Partager le stock",
+      title: "Stock en dépôt",
+      supplier: "Sacs de {supplier}",
+      price: "Prix : {amount}",
+      bags: { one: "{n} sac", other: "{n} sacs" },
+      total: "Total en dépôt",
+      page: "Page {n}/{total}",
+      shareText: "Stock en dépôt chez {shop} au {date} : {bags}.",
+    },
     receipt: {
       share: "Partager le reçu",
       title: "Reçu de règlement",

@@ -20,8 +20,7 @@ export function ShareReceiptButton({
   const { shop } = useShop();
   return (
     <ShareImageButton
-      url={`/s/${shop.slug}/ventes/${saleId}/recu`}
-      fileName={`recu-${saleNumber}.png`}
+      files={[{ url: `/s/${shop.slug}/ventes/${saleId}/recu`, name: `recu-${saleNumber}.png` }]}
       title={fill(fr.sales.shareText, { shop: shop.name })}
       text={text}
       phone={customerPhone}

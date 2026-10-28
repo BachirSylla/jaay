@@ -21,8 +21,12 @@ export function SharePaymentReceiptButton({
   const { shop } = useShop();
   return (
     <ShareImageButton
-      url={`/s/${shop.slug}/fournisseurs/${supplier.id}/reglements/${payment.id}/recu`}
-      fileName={`reglement-${payment.paidAt.slice(0, 10)}.png`}
+      files={[
+        {
+          url: `/s/${shop.slug}/fournisseurs/${supplier.id}/reglements/${payment.id}/recu`,
+          name: `reglement-${payment.paidAt.slice(0, 10)}.png`,
+        },
+      ]}
       title={`${t.title} — ${shop.name}`}
       text={fill(t.shareText, {
         amount: formatMoney(payment.amount),

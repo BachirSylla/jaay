@@ -58,6 +58,15 @@ test("owner sees the balance due and records a payment", async ({ page }) => {
   await page.getByRole("button", { name: "Historique" }).click();
   await expect(page.getByText("Règlement", { exact: true })).toBeVisible();
 
+  // Stock sheet for the supplier: on desktop, its page(s) are downloaded.
+  const sheetPopup = page.waitForEvent("popup").catch(() => null);
+  const sheet = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Partager le stock" }).click();
+  const sheetFile = await sheet;
+  expect(sheetFile.suggestedFilename()).toMatch(/^stock-\d{4}-\d{2}-\d{2}(-1)?\.png$/);
+  await sheetFile.saveAs(test.info().outputPath("stock-sheet.png"));
+  await (await sheetPopup)?.close();
+
   // Receipt image: on desktop (no file sharing) it is downloaded, then WhatsApp opens.
   const popup = page.waitForEvent("popup").catch(() => null);
   const download = page.waitForEvent("download");

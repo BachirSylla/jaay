@@ -19,6 +19,7 @@ import { listReturns } from "@/features/returns/queries";
 import { requireShopAction } from "@/features/shop/require";
 import { CancelPaymentButton } from "@/features/suppliers/components/CancelPaymentButton";
 import { SharePaymentReceiptButton } from "@/features/suppliers/components/SharePaymentReceiptButton";
+import { ShareSupplierStockButton } from "@/features/suppliers/components/ShareSupplierStockButton";
 import { SupplierActions } from "@/features/suppliers/components/SupplierActions";
 import { SupplierPaymentDialog } from "@/features/suppliers/components/SupplierPaymentDialog";
 import { SupplierTabs } from "@/features/suppliers/components/SupplierTabs";
@@ -32,6 +33,7 @@ import {
 import { formatDate, formatMoney, formatQty } from "@/lib/format";
 import { fill } from "@/lib/i18n";
 import { formatPhone } from "@/lib/phone";
+import { stockPageCount } from "@/features/suppliers/stock-sheet";
 import { isUuid } from "@/lib/uuid";
 import { fr } from "@/messages/fr";
 
@@ -310,6 +312,15 @@ async function SupplierDetail({ params }: { params: Promise<{ shopSlug: string; 
                     {a.returnUnsold}
                   </Link>
                 </Button>
+              ) : null}
+              {account.qtyInStock > 0 ? (
+                <ShareSupplierStockButton
+                  supplier={supplier}
+                  pages={stockPageCount(
+                    new Set(openLots.map((lot) => `${lot.productId}:${lot.unitCost}`)).size,
+                  )}
+                  bags={account.qtyInStock}
+                />
               ) : null}
             </div>
           </section>

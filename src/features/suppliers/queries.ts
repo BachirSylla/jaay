@@ -1,5 +1,7 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { fr } from "@/messages/fr";
+import type { StockSheetRow } from "./stock-sheet";
 import type { Supplier, SupplierBalance, SupplierLot, SupplierPayment } from "./types";
 
 const COLUMNS = "id, name, phone, address, notes, archived_at, created_at";
@@ -270,4 +272,80 @@ export async function getPaymentReceipt(
     lines: [...lines.values()],
     advance: payment.amount - covered,
   };
+}
+
+/**
+ * Bags of a supplier still in the shop, one row per model and supplier price, with the bags
+ * per color (owner/admin: get_supplier_lots refuses managers).
+ */
+export async function getSupplierStockSheet(
+  shopId: string,
+  supplierId: string,
+): Promise<StockSheetRow[]> {
+  const supabase = await createClient();
+  const lots = (await getSupplierLots(supplierId)).filter((lot) => lot.qtyAvailable > 0);
+  if (lots.length === 0) return [];
+
+  const [productsResult, variantsResult] = await Promise.all([
+    supabase
+      .from("products")
+      .select("id, name, color, photos:product_photos (storage_path, position)")
+      .eq("shop_id", shopId)
+      .in("id", [...new Set(lots.map((lot) => lot.productId))]),
+    supabase
+      .from("product_variants")
+      .select("id, color, position")
+      .eq("shop_id", shopId)
+      .in("product_id", [...new Set(lots.map((lot) => lot.productId))]),
+  ]);
+  if (productsResult.error) throw productsResult.error;
+  if (variantsResult.error) throw variantsResult.error;
+  const products = new Map((productsResult.data ?? []).map((p) => [p.id, p]));
+  const variants = new Map((variantsResult.data ?? []).map((v) => [v.id, v]));
+
+  const rows = new Map<string, StockSheetRow & { byColor: Map<string, number> }>();
+  for (const lot of lots) {
+    const product = products.get(lot.productId);
+    const key = `${lot.productId}:${lot.unitCost}`;
+    const cover = [...(product?.photos ?? [])].sort((a, b) => a.position - b.position)[0];
+    const row = rows.get(key) ?? {
+      key,
+      name: product?.name ?? "",
+      color: product?.color ?? null,
+      photoPath: cover?.storage_path ?? null,
+      unitCost: lot.unitCost,
+      bags: 0,
+      colors: [],
+      byColor: new Map<string, number>(),
+    };
+    row.bags += lot.qtyAvailable;
+    const colorKey = lot.variantId ?? "";
+    row.byColor.set(colorKey, (row.byColor.get(colorKey) ?? 0) + lot.qtyAvailable);
+    rows.set(key, row);
+  }
+
+  return [...rows.values()]
+    .map(({ byColor, ...row }) => {
+      const colors = [...byColor]
+        .map(([variantId, bags]) => {
+          const variant = variants.get(variantId);
+          return {
+            color: variant?.color ?? null,
+            label: variant?.color ?? fr.variants.none,
+            bags,
+            position: variant?.position ?? Number.MAX_SAFE_INTEGER,
+          };
+        })
+        .sort((a, b) => a.position - b.position)
+        .map(({ color, label, bags }) => ({ color, label, bags }));
+      // A single color is shown on the name line; several colors get the detail.
+      const single = colors.length === 1 ? colors[0] : null;
+      return {
+        ...row,
+        name: single?.color ? `${row.name} · ${single.color}` : row.name,
+        color: colors.find((c) => c.color)?.color ?? row.color,
+        colors: colors.length > 1 ? colors : [],
+      };
+    })
+    .sort((a, b) => a.name.localeCompare(b.name, "fr") || a.unitCost - b.unitCost);
 }
