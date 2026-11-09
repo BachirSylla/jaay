@@ -29,6 +29,15 @@ export const BAG_COLORS = [
 
 export type BagColor = (typeof BAG_COLORS)[number];
 
+/** Same colors as hex values, for the images drawn by next/og (no CSS classes there). */
+export const BAG_HEX: Record<BagColor["key"], string> = {
+  black: "#2A2521",
+  brown: "#8A5530",
+  caramel: "#C99A6B",
+  sand: "#E2D3BE",
+  navy: "#1F2A44",
+};
+
 /** Picks the thumbnail color from the free-text color of the product ("Noir mat" → black). */
 export function bagColorFor(color: string | null | undefined): BagColor {
   const value = (color ?? "").toLowerCase();

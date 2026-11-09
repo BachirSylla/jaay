@@ -4,7 +4,7 @@ import { previewUrl } from "@/features/catalog/og";
 import { getShopContext } from "@/features/shop/queries";
 import { getSupplier, getSupplierStockSheet } from "@/features/suppliers/queries";
 import { STOCK_ROWS_PER_PAGE, stockPageCount } from "@/features/suppliers/stock-sheet";
-import { bagColorFor } from "@/lib/bag-colors";
+import { BAG_HEX, bagColorFor } from "@/lib/bag-colors";
 import { formatDate, formatMoney } from "@/lib/format";
 import { fill, plural } from "@/lib/i18n";
 import { can } from "@/lib/permissions";
@@ -15,15 +15,6 @@ const WIDTH = 1080;
 const PHOTO = 132;
 const ROW = PHOTO + 32;
 const t = fr.supplierAccount.stockSheet;
-
-/** Thumbnail colors of DESIGN.md §2, for bags without photo. */
-const BAG_HEX: Record<string, string> = {
-  black: "#2A2521",
-  brown: "#8A5530",
-  caramel: "#C99A6B",
-  sand: "#E2D3BE",
-  navy: "#1F2A44",
-};
 
 /**
  * One page (?page=1…) of the supplier stock sheet as a PNG, to share on WhatsApp: the bags of

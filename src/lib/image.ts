@@ -3,7 +3,16 @@ export function previewPathFor(storagePath: string): string {
   return storagePath.replace(/\.(webp|jpg)$/, ".og.jpg");
 }
 
-export type CompressedImage = { blob: Blob; extension: "webp" | "jpg"; contentType: string };
+/** PNG copy of a shop logo for the images drawn by next/og, which cannot read WebP. */
+export function logoCopyPathFor(logoPath: string): string {
+  return logoPath.replace(/\.(webp|jpg)$/, ".receipt.png");
+}
+
+export type CompressedImage = {
+  blob: Blob;
+  extension: "webp" | "jpg" | "png";
+  contentType: string;
+};
 
 /**
  * Resizes a photo to at most `maxSize` px on its longest side and encodes it in WebP.
@@ -15,7 +24,7 @@ export async function compressImage(
     maxSize = 1600,
     quality = 0.82,
     format = "webp",
-  }: { maxSize?: number; quality?: number; format?: "webp" | "jpeg" } = {},
+  }: { maxSize?: number; quality?: number; format?: "webp" | "jpeg" | "png" } = {},
 ): Promise<CompressedImage> {
   // imageOrientation applies the EXIF rotation of phone photos.
   const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
@@ -33,6 +42,12 @@ export async function compressImage(
 
   const encode = (type: string) =>
     new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, type, quality));
+
+  if (format === "png") {
+    const png = await encode("image/png");
+    if (!png) throw new Error("Image encoding failed");
+    return { blob: png, extension: "png", contentType: "image/png" };
+  }
 
   const webp = format === "webp" ? await encode("image/webp") : null;
   if (webp && webp.type === "image/webp") {

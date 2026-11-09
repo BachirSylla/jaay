@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Field, fieldAria } from "@/components/shared/Field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { errorMessage } from "@/lib/errors";
 import { formatPhone } from "@/lib/phone";
@@ -28,6 +29,7 @@ export function ShopSettingsForm() {
     defaultValues: {
       name: shop.name,
       whatsappPhone: shop.whatsappPhone ? formatPhone(shop.whatsappPhone) : "",
+      address: shop.address ?? "",
       showPublicPrices: shop.showPublicPrices,
       catalogEnabled: shop.catalogEnabled,
     },
@@ -76,6 +78,22 @@ export function ShopSettingsForm() {
           inputMode="tel"
           placeholder={fr.welcome.whatsappPlaceholder}
           {...form.register("whatsappPhone")}
+        />
+      </Field>
+
+      <Field
+        label={t.address}
+        htmlFor="address"
+        optional={fr.common.optional}
+        error={errors.address?.message}
+        hint={t.addressHint}
+      >
+        <Textarea
+          {...fieldAria("address", errors.address?.message, true)}
+          rows={2}
+          maxLength={200}
+          placeholder={t.addressPlaceholder}
+          {...form.register("address")}
         />
       </Field>
 

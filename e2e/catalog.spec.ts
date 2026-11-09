@@ -1,6 +1,6 @@
 import { deflateSync } from "node:zlib";
 import { expect, test } from "@playwright/test";
-import { seedOwnerShop } from "./support/admin";
+import { adminClient, seedOwnerShop } from "./support/admin";
 import { signIn } from "./support/auth";
 import { seedDemoData, seedDemoStock } from "./support/demo-data";
 
@@ -104,10 +104,21 @@ test("owner hides prices, adds a logo, then disables the catalog", async ({ page
   });
   await expect(page.getByText("Logo enregistré.")).toBeVisible({ timeout: 20_000 });
 
+  // The logo gets a PNG copy for the receipts (next/og cannot read WebP).
+  const admin = adminClient();
+  const { data: shop } = await admin.from("shops").select("id").eq("slug", slug).single();
+  const { data: logos } = await admin.storage.from("shop-logos").list(shop!.id);
+  expect(logos?.some((file) => file.name.endsWith(".receipt.png"))).toBe(true);
+
+  await page.getByLabel(/Adresse de la boutique/).fill("Diamalaye, près de la Brioche Dorée");
   await page.getByRole("switch", { name: /Afficher les prix/ }).click();
   await page.getByRole("button", { name: "Enregistrer" }).click();
   // Saved: the form is clean again, so the button is disabled.
   await expect(page.getByRole("button", { name: "Enregistrer" })).toBeDisabled();
+  await page.reload();
+  await expect(page.getByLabel(/Adresse de la boutique/)).toHaveValue(
+    "Diamalaye, près de la Brioche Dorée",
+  );
 
   const visitor = await page.context().browser()!.newPage();
   await visitor.goto(`/b/${slug}`);

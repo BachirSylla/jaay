@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { previewUrl } from "@/features/catalog/og";
 import { getShopContext } from "@/features/shop/queries";
 import { getPaymentReceipt } from "@/features/suppliers/queries";
-import { bagColorFor } from "@/lib/bag-colors";
+import { BAG_HEX, bagColorFor } from "@/lib/bag-colors";
 import { formatDate, formatMoney } from "@/lib/format";
 import { fill } from "@/lib/i18n";
 import { can } from "@/lib/permissions";
@@ -13,15 +13,6 @@ import { fr } from "@/messages/fr";
 const WIDTH = 1080;
 const PHOTO = 132;
 const t = fr.supplierAccount.receipt;
-
-/** Thumbnail colors of DESIGN.md §2, for bags without photo. */
-const BAG_HEX: Record<string, string> = {
-  black: "#2A2521",
-  brown: "#8A5530",
-  caramel: "#C99A6B",
-  sand: "#E2D3BE",
-  navy: "#1F2A44",
-};
 
 /**
  * Receipt of a supplier payment as a PNG, to share on WhatsApp: the sold bags it pays for, at

@@ -3,6 +3,7 @@
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { type ActionResult, toErrorCode } from "@/lib/errors";
+import { logoCopyPathFor } from "@/lib/image";
 import type { ShopRole } from "@/lib/permissions";
 import { refreshPublicCatalog } from "@/features/catalog/cache";
 import { SHOP_LOGOS_BUCKET } from "@/lib/storage";
@@ -44,6 +45,7 @@ export async function updateShopSettings(
   const parsed = shopSettingsSchema.safeParse({
     ...values,
     whatsappPhone: values.whatsappPhone ?? "",
+    address: values.address ?? "",
   });
   if (!parsed.success) return { ok: false, error: "VALIDATION" };
 
@@ -53,6 +55,7 @@ export async function updateShopSettings(
     .update({
       name: parsed.data.name,
       whatsapp_phone: parsed.data.whatsappPhone,
+      address: parsed.data.address,
       show_public_prices: parsed.data.showPublicPrices,
       catalog_enabled: parsed.data.catalogEnabled,
     })
@@ -213,7 +216,9 @@ export async function setShopLogo(shopId: string, logoPath: string | null): Prom
 
   // The previous file is no longer used (a leftover file would be harmless).
   if (current?.logo_path && current.logo_path !== logoPath) {
-    await supabase.storage.from(SHOP_LOGOS_BUCKET).remove([current.logo_path]);
+    await supabase.storage
+      .from(SHOP_LOGOS_BUCKET)
+      .remove([current.logo_path, logoCopyPathFor(current.logo_path)]);
   }
 
   await refreshPublicCatalog(shopId);

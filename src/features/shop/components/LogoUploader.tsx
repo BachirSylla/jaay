@@ -6,7 +6,7 @@ import { ImagePlus, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { errorMessage } from "@/lib/errors";
-import { compressImage } from "@/lib/image";
+import { compressImage, logoCopyPathFor } from "@/lib/image";
 import { initials } from "@/lib/initials";
 import { SHOP_LOGOS_BUCKET, shopLogoUrl } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/client";
@@ -35,10 +35,16 @@ export function LogoUploader() {
         cacheControl: "31536000",
       });
       if (error) throw error;
+      // Copy for the receipts: PNG keeps the transparency of the logo.
+      const copy = await compressImage(file, { maxSize: 256, format: "png" });
+      await bucket.upload(logoCopyPathFor(path), copy.blob, {
+        contentType: copy.contentType,
+        cacheControl: "31536000",
+      });
       const result = await setShopLogo(shop.id, path);
       if (result.ok) toast.success(t.logoSaved);
       else {
-        await bucket.remove([path]);
+        await bucket.remove([path, logoCopyPathFor(path)]);
         toast.error(errorMessage(result.error));
       }
     } catch {

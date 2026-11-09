@@ -29,6 +29,11 @@ export type CreateShopValues = z.output<typeof createShopSchema>;
 export const shopSettingsSchema = z.object({
   name: shopNameSchema,
   whatsappPhone: optionalPhoneSchema,
+  address: z
+    .string()
+    .trim()
+    .max(200, { error: fr.settings.addressTooLong })
+    .transform((value) => (value === "" ? null : value)),
   showPublicPrices: z.boolean(),
   catalogEnabled: z.boolean(),
 });

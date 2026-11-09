@@ -64,7 +64,7 @@ export const getShopContext = cache(async (slug: string): Promise<ShopContext | 
   const { data: shop, error } = await supabase
     .from("shops")
     .select(
-      "id, name, slug, whatsapp_phone, show_public_prices, catalog_enabled, currency, logo_path",
+      "id, name, slug, whatsapp_phone, address, show_public_prices, catalog_enabled, currency, logo_path",
     )
     .eq("id", membership.id)
     .maybeSingle();
@@ -80,6 +80,7 @@ export const getShopContext = cache(async (slug: string): Promise<ShopContext | 
       name: shop.name,
       slug: shop.slug,
       whatsappPhone: shop.whatsapp_phone,
+      address: shop.address,
       showPublicPrices: shop.show_public_prices,
       catalogEnabled: shop.catalog_enabled,
       currency: shop.currency,

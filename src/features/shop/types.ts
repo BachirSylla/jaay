@@ -9,6 +9,8 @@ export type ShopDetails = {
   name: string;
   slug: string;
   whatsappPhone: string | null;
+  /** Free text shown on receipts. */
+  address: string | null;
   showPublicPrices: boolean;
   catalogEnabled: boolean;
   currency: string;
