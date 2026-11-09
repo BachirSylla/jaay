@@ -905,6 +905,7 @@ export type Database = {
       }
       shops: {
         Row: {
+          address: string | null
           catalog_enabled: boolean
           created_at: string
           created_by: string | null
@@ -918,6 +919,7 @@ export type Database = {
           whatsapp_phone: string | null
         }
         Insert: {
+          address?: string | null
           catalog_enabled?: boolean
           created_at?: string
           created_by?: string | null
@@ -931,6 +933,7 @@ export type Database = {
           whatsapp_phone?: string | null
         }
         Update: {
+          address?: string | null
           catalog_enabled?: boolean
           created_at?: string
           created_by?: string | null
@@ -1200,6 +1203,7 @@ export type Database = {
       create_shop: {
         Args: { p_name: string; p_slug?: string; p_whatsapp_phone?: string }
         Returns: {
+          address: string | null
           catalog_enabled: boolean
           created_at: string
           created_by: string | null
