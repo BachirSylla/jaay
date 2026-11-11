@@ -1,48 +1,36 @@
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { NextResponse, type NextRequest } from "next/server";
 import { previewUrl } from "@/features/catalog/og";
 import { getSale } from "@/features/sales/queries";
 import { getMembers, getShopContext } from "@/features/shop/queries";
+import {
+  DISPLAY_FONT,
+  PaidStamp,
+  receiptFonts,
+  ShopMark,
+  shopLogoForImage,
+} from "@/features/shop/receipt-image";
 import { bagColorFor, BAG_HEX, isLightBag } from "@/lib/bag-colors";
 import { formatDate, formatMoney } from "@/lib/format";
 import { fill } from "@/lib/i18n";
-import { logoCopyPathFor } from "@/lib/image";
 import { formatPhone } from "@/lib/phone";
-import { productPhotoUrl, shopLogoUrl } from "@/lib/storage";
+import { productPhotoUrl } from "@/lib/storage";
 import { isUuid } from "@/lib/uuid";
 import { fr } from "@/messages/fr";
 
 const WIDTH = 1080;
 const PHOTO = 148;
-const DISPLAY = "Bricolage Grotesque";
+const DISPLAY = DISPLAY_FONT;
 const t = fr.sales;
 const INK = "#191714";
 const MUTED = "#6B655E";
 const LINE = "#E3E0DA";
-const EMERALD = "#17694F";
 const COGNAC = "#A85A24";
-
-function font(file: string) {
-  return readFile(join(process.cwd(), "src/assets/fonts", file));
-}
 
 /** Photo the image engine can read: the JPEG preview, else an original already in JPEG. */
 async function linePhoto(path: string | null): Promise<string | null> {
   if (!path) return null;
   return (await previewUrl(path)) ?? (path.endsWith(".jpg") ? productPhotoUrl(path) : null);
-}
-
-/** PNG copy of the logo (the engine cannot read WebP); logos sent before it have none. */
-async function logoUrl(path: string | null): Promise<string | null> {
-  if (!path) return null;
-  const url = shopLogoUrl(logoCopyPathFor(path));
-  try {
-    return (await fetch(url, { method: "HEAD" })).ok ? url : null;
-  } catch {
-    return null;
-  }
 }
 
 /**
@@ -61,13 +49,11 @@ export async function GET(
   const sale = await getSale(shop.id, id, false);
   if (!sale || sale.status !== "active") return new NextResponse(null, { status: 404 });
 
-  const [members, photos, logo, regular, semiBold, display] = await Promise.all([
+  const [members, photos, logo, fonts] = await Promise.all([
     getMembers(shop.id),
     Promise.all(sale.lines.map((line) => linePhoto(line.photoPath))),
-    logoUrl(shop.logoPath),
-    font("DMSans-Regular.ttf"),
-    font("DMSans-SemiBold.ttf"),
-    font("BricolageGrotesque-Bold.ttf"),
+    shopLogoForImage(shop.logoPath),
+    receiptFonts(),
   ]);
   const seller = members.find((m) => m.userId === sale.createdBy)?.fullName ?? null;
   const addressLines = (shop.address ?? "").split("\n").filter((line) => line.trim() !== "");
@@ -112,33 +98,7 @@ export async function GET(
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 24, flex: 1 }}>
-          {logo ? (
-            // eslint-disable-next-line @next/next/no-img-element -- rendered to PNG by next/og
-            <img
-              src={logo}
-              alt=""
-              width={112}
-              height={112}
-              style={{ borderRadius: 28, objectFit: "cover" }}
-            />
-          ) : (
-            <div
-              style={{
-                width: 112,
-                height: 112,
-                borderRadius: 28,
-                background: "#191410",
-                color: "#F2C894",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontFamily: DISPLAY,
-                fontSize: 60,
-              }}
-            >
-              {shop.name.slice(0, 1).toUpperCase()}
-            </div>
-          )}
+          <ShopMark logo={logo} name={shop.name} size={112} />
           <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
             <span style={{ fontFamily: DISPLAY, fontSize: 48 }}>{shop.name}</span>
             <div
@@ -282,36 +242,7 @@ export async function GET(
               </div>
             ))}
           </div>
-          <div
-            style={{
-              display: "flex",
-              marginRight: 24,
-              padding: 7,
-              border: `7px solid ${EMERALD}`,
-              borderRadius: 22,
-              color: EMERALD,
-              opacity: 0.88,
-              transform: "rotate(-12deg)",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                padding: "8px 30px",
-                border: `3px solid ${EMERALD}`,
-                borderRadius: 12,
-              }}
-            >
-              <span style={{ fontFamily: DISPLAY, fontSize: 74, letterSpacing: 7 }}>
-                {t.receiptPaid}
-              </span>
-              <span style={{ fontSize: 22, fontWeight: 600, letterSpacing: 1 }}>
-                {formatDate(sale.soldAt)}
-              </span>
-            </div>
-          </div>
+          <PaidStamp label={t.receiptPaid} date={formatDate(sale.soldAt)} />
         </div>
       </div>
 
@@ -332,11 +263,7 @@ export async function GET(
       width: WIDTH,
       height,
       headers: { "Cache-Control": "private, no-store" },
-      fonts: [
-        { name: "DM Sans", data: regular, weight: 400, style: "normal" },
-        { name: "DM Sans", data: semiBold, weight: 600, style: "normal" },
-        { name: DISPLAY, data: display, weight: 700, style: "normal" },
-      ],
+      fonts,
     },
   );
 }
